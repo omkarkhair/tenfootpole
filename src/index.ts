@@ -48,6 +48,15 @@ export default {
       return handleProvisionStatus(statusMatch[1], env);
     }
 
+    // Dedicated status page: /sandbox/<instanceId>. Serve the same static
+    // page for any instance id; the page reads the id from the URL client-side.
+    if (url.pathname.match(/^\/sandbox\/[^/]+$/) && request.method === 'GET') {
+      // The assets binding serves sandbox.html's content at the
+      // extensionless `/sandbox` path (its default html_handling behavior);
+      // requesting `/sandbox.html` directly would 307-redirect instead.
+      return env.ASSETS.fetch(new Request(new URL('/sandbox', url), request));
+    }
+
     return env.ASSETS.fetch(request);
   },
 };
@@ -74,7 +83,15 @@ async function handleProvision(request: Request, env: Env): Promise<Response> {
   }
 
   try {
-    const instance = await env.PROVISION_WORKFLOW.create({ params: { repo } });
+    // Encode the creation time into the instance id (Workflows' own
+    // `InstanceStatus` doesn't expose timestamps) so the status endpoint can
+    // report a real elapsed time and derive a human-readable phase, instead
+    // of just "running" with no detail.
+    const instanceId = `prov-${Date.now().toString(36)}-${crypto.randomUUID().slice(0, 8)}`;
+    const instance = await env.PROVISION_WORKFLOW.create({
+      id: instanceId,
+      params: { repo },
+    });
     log('POST /api/provision', 'workflow created', {
       repo,
       instanceId: instance.id,
@@ -117,18 +134,59 @@ async function handleProvisionStatus(
 
     if (status.status === 'complete') {
       const output = status.output as ProvisionOutput;
+      const ready = await isTunnelReady(output.url);
       log('GET /api/provision/:id', 'complete', {
         instanceId,
         url: output.url,
+        ready,
       });
-      return Response.json({ status: status.status, url: output.url });
+      return Response.json({ status: status.status, url: output.url, ready });
     }
 
-    return Response.json({ status: status.status });
+    // "running"/"queued"/etc — no per-step detail is available from the
+    // Workflows API, so approximate a human-readable phase from elapsed
+    // time. This is a heuristic, not ground truth from the Workflow itself.
+    const { phase, message } = describeProgress(instanceId);
+    return Response.json({ status: status.status, phase, message });
   } catch (error) {
     const message =
       error instanceof Error ? error.message : 'Instance not found';
     log('GET /api/provision/:id', 'lookup failed', { instanceId, error: message });
     return Response.json({ error: message }, { status: 404 });
+  }
+}
+
+// Instance ids are minted as `prov-<base36 timestamp>-<random>` (see
+// handleProvision), so elapsed time can be recovered without extra storage.
+function describeProgress(instanceId: string): { phase: string; message: string } {
+  const match = instanceId.match(/^prov-([0-9a-z]+)-/);
+  const createdAt = match ? parseInt(match[1], 36) : NaN;
+  const elapsedMs = Number.isFinite(createdAt) ? Date.now() - createdAt : 0;
+
+  if (elapsedMs < 8_000) {
+    return { phase: 'checkout', message: 'Cloning repository...' };
+  }
+  if (elapsedMs < 20_000) {
+    return { phase: 'server', message: 'Starting code-server...' };
+  }
+  return { phase: 'tunnel', message: 'Exposing tunnel...' };
+}
+
+// Probe the tunnel URL server-side (avoids browser CORS/opaque-response
+// limitations) so the status page only points users at a link once the
+// tunnel is actually reachable, rather than immediately after the Workflow
+// reports "complete" — quick tunnels can take a few seconds to propagate.
+async function isTunnelReady(url: string): Promise<boolean> {
+  try {
+    const response = await fetch(url, {
+      method: 'GET',
+      signal: AbortSignal.timeout(5000),
+    });
+    // Any response from the origin (even a 4xx from code-server itself)
+    // means the tunnel is up. 5xx/52x/523 status codes indicate the edge
+    // couldn't reach the origin yet.
+    return response.status < 500;
+  } catch {
+    return false;
   }
 }

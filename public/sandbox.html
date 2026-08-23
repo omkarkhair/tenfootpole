@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>tenfootpole — sandbox status</title>
+  <link rel="stylesheet" href="/style.css" />
+  <link rel="stylesheet" href="/sandbox.css" />
+</head>
+<body>
+  <div class="bg-grid"></div>
+
+  <main>
+    <header class="hero">
+      <h1 class="title">tenfootpole</h1>
+      <p class="tagline" id="repo-tagline">Provisioning your sandbox&hellip;</p>
+    </header>
+
+    <div class="card">
+      <span class="bracket bracket-tl"></span>
+      <span class="bracket bracket-tr"></span>
+      <span class="bracket bracket-bl"></span>
+      <span class="bracket bracket-br"></span>
+
+      <div class="sandbox-status">
+        <div class="status" id="phase-message" hidden>Provisioning...</div>
+
+        <div class="stepper" id="stepper">
+          <div class="step" data-step="checkout">
+            <span class="step-dot"></span>
+            <span class="step-label">Cloning repository</span>
+          </div>
+          <div class="step" data-step="server">
+            <span class="step-dot"></span>
+            <span class="step-label">Starting code-server</span>
+          </div>
+          <div class="step" data-step="tunnel">
+            <span class="step-dot"></span>
+            <span class="step-label">Exposing tunnel</span>
+          </div>
+          <div class="step" data-step="ready">
+            <span class="step-dot"></span>
+            <span class="step-label">Waiting for readiness</span>
+          </div>
+        </div>
+
+        <div class="details" id="details" hidden>
+          <div class="detail-row">
+            <span class="detail-key">Repository</span>
+            <span class="detail-value" id="detail-repo">&mdash;</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-key">Instance</span>
+            <span class="detail-value" id="detail-instance">&mdash;</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-key">Elapsed</span>
+            <span class="detail-value" id="detail-elapsed">0s</span>
+          </div>
+          <div class="detail-row" id="detail-url-row" hidden>
+            <span class="detail-key">Preview URL</span>
+            <span class="detail-value">
+              <code id="detail-url"></code>
+            </span>
+          </div>
+        </div>
+
+        <a id="open-btn" class="open-btn" href="#" target="_blank" rel="noopener noreferrer" hidden>
+          <span>Open IDE</span>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7"/><path d="M7 7h10v10"/></svg>
+        </a>
+
+        <div id="error" class="error" hidden></div>
+
+        <a href="/" class="back-link" id="back-link" hidden>&larr; Provision another sandbox</a>
+      </div>
+    </div>
+
+    <footer class="footer">
+      <span class="dot"></span>
+      <span>Isolated cloud IDE via Cloudflare Sandbox</span>
+    </footer>
+  </main>
+
+  <script src="/sandbox.js"></script>
+</body>
+</html>

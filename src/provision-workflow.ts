@@ -10,6 +10,22 @@ export type ProvisionOutput = {
   url: string;
 };
 
+// Applied on first getSandbox() call for a given sandbox ID.
+//
+// Note: traffic through an exposed tunnel/port goes straight to the
+// container and does NOT reset this inactivity timer — only calls made
+// through the Sandbox DO (via the SDK) do. A user actively using code-server
+// through the tunnel can still have their sandbox go to sleep and the tunnel
+// die underneath them. Extend the default (10m) generously here since this
+// is an interactive IDE session; a follow-up could periodically "ping" the
+// sandbox (e.g. `sandbox.exists()`) from the client while the tab is open,
+// or use `keepAlive` with explicit `destroy()` cleanup.
+const SANDBOX_OPTIONS = {
+  normalizeId: true,
+  enableDefaultSession: false,
+  sleepAfter: '2h',
+} as const;
+
 function log(
   instanceId: string,
   step: string,
@@ -60,10 +76,7 @@ export class ProvisionWorkflow extends WorkflowEntrypoint<Env, ProvisionParams> 
           sandboxId,
           attempt: ctx.attempt,
         });
-        const sandbox = getSandbox(this.env.Sandbox, sandboxId, {
-          normalizeId: true,
-          enableDefaultSession: false,
-        });
+        const sandbox = getSandbox(this.env.Sandbox, sandboxId, SANDBOX_OPTIONS);
 
         const projectExists = await sandbox.exists('/workspace/project');
         log(instanceId, 'checkout repo', 'exists check', {
@@ -97,10 +110,7 @@ export class ProvisionWorkflow extends WorkflowEntrypoint<Env, ProvisionParams> 
           sandboxId,
           attempt: ctx.attempt,
         });
-        const sandbox = getSandbox(this.env.Sandbox, sandboxId, {
-          normalizeId: true,
-          enableDefaultSession: false,
-        });
+        const sandbox = getSandbox(this.env.Sandbox, sandboxId, SANDBOX_OPTIONS);
 
         const processes = await sandbox.listProcesses();
         const codeServerRunning = processes.some((p) =>
@@ -145,10 +155,7 @@ export class ProvisionWorkflow extends WorkflowEntrypoint<Env, ProvisionParams> 
             sandboxId,
             attempt: ctx.attempt,
           });
-          const sandbox = getSandbox(this.env.Sandbox, sandboxId, {
-            normalizeId: true,
-            enableDefaultSession: false,
-          });
+          const sandbox = getSandbox(this.env.Sandbox, sandboxId, SANDBOX_OPTIONS);
           const tunnel = await sandbox.tunnels.get(8080);
           log(instanceId, 'expose tunnel', 'done', {
             sandboxId,
