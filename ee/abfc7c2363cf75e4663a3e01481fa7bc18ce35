@@ -1,0 +1,21 @@
+package-lock.json
+  s_14712516f015f5::t_94b81ae19ea3d7 11,36-38,44
+package.json
+  s_14712516f015f5::t_f3df0d966556fc 12
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "eeabfc7c2363cf75e4663a3e01481fa7bc18ce35",
+  "prompts": {},
+  "sessions": {
+    "s_14712516f015f5": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_fd2102adaffeae0aQlN3KTFGX9",
+        "model": "claude-sonnet-5"
+      },
+      "human_author": "Omkar Khair <omkar@cloudflare.com>"
+    }
+  }
+}
