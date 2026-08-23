@@ -137,22 +137,26 @@ export class ProvisionWorkflow extends WorkflowEntrypoint<Env, ProvisionParams> 
     });
 
     const url = await step
-      .do('expose tunnel', async (ctx) => {
-        log(instanceId, 'expose tunnel', 'start', {
-          sandboxId,
-          attempt: ctx.attempt,
-        });
-        const sandbox = getSandbox(this.env.Sandbox, sandboxId, {
-          normalizeId: true,
-          enableDefaultSession: false,
-        });
-        const tunnel = await sandbox.tunnels.get(8080);
-        log(instanceId, 'expose tunnel', 'done', {
-          sandboxId,
-          url: tunnel.url,
-        });
-        return tunnel.url;
-      })
+      .do(
+        'expose tunnel',
+        { retries: { limit: 5, delay: '10 seconds', backoff: 'exponential' } },
+        async (ctx) => {
+          log(instanceId, 'expose tunnel', 'start', {
+            sandboxId,
+            attempt: ctx.attempt,
+          });
+          const sandbox = getSandbox(this.env.Sandbox, sandboxId, {
+            normalizeId: true,
+            enableDefaultSession: false,
+          });
+          const tunnel = await sandbox.tunnels.get(8080);
+          log(instanceId, 'expose tunnel', 'done', {
+            sandboxId,
+            url: tunnel.url,
+          });
+          return tunnel.url;
+        },
+      )
       .catch((error) => {
         log(instanceId, 'expose tunnel', 'failed', {
           sandboxId,
