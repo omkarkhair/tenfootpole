@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>tenfootpole</title>
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <div class="bg-grid"></div>
+
+  <main>
+    <header class="hero">
+      <h1 class="title">tenfootpole</h1>
+      <p class="tagline">
+        Some repos, you wouldn't touch with a ten-foot pole.
+        <br />For the rest, you need one.
+      </p>
+    </header>
+
+    <div class="card">
+      <span class="bracket bracket-tl"></span>
+      <span class="bracket bracket-tr"></span>
+      <span class="bracket bracket-bl"></span>
+      <span class="bracket bracket-br"></span>
+
+      <form id="provision-form">
+        <label for="repo-input" class="field-label">Git endpoint</label>
+        <input
+          type="text"
+          id="repo-input"
+          name="repo"
+          placeholder="https://github.com/user/repo"
+          autocomplete="off"
+          spellcheck="false"
+        />
+
+        <div class="settings-row">
+          <label for="instance-type" class="field-label">Container size</label>
+          <div class="select-wrapper">
+            <select id="instance-type" name="instanceType">
+              <option value="lite">Lite — 1/16 vCPU, 256 MiB, 2 GB</option>
+              <option value="basic" selected>Basic — 1/4 vCPU, 1 GiB, 4 GB</option>
+              <option value="standard-1">Standard-1 — 1/2 vCPU, 4 GiB, 8 GB</option>
+              <option value="standard-2">Standard-2 — 1 vCPU, 6 GiB, 12 GB</option>
+              <option value="standard-3">Standard-3 — 2 vCPU, 8 GiB, 16 GB</option>
+              <option value="standard-4">Standard-4 — 4 vCPU, 12 GiB, 20 GB</option>
+            </select>
+          </div>
+        </div>
+
+        <button type="submit" id="poke-btn">
+          <span class="btn-text">Poke</span>
+          <span class="btn-spinner"></span>
+        </button>
+
+        <div id="status" class="status" hidden></div>
+        <div id="error" class="error" hidden></div>
+      </form>
+    </div>
+
+    <footer class="footer">
+      <span class="dot"></span>
+      <span>Isolated cloud IDE via Cloudflare Sandbox</span>
+    </footer>
+  </main>
+
+  <script src="/app.js"></script>
+</body>
+</html>
