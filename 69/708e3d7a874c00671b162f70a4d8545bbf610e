@@ -1,0 +1,31 @@
+package-lock.json
+  s_67f3871e90274b::t_9fb573cbeed262 1-1630
+package.json
+  s_67f3871e90274b::t_f9fa99f666e200 1-19
+worker-configuration.d.ts
+  s_14712516f015f5::t_cad1571c27ded9 1-14717
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "69708e3d7a874c00671b162f70a4d8545bbf610e",
+  "prompts": {},
+  "sessions": {
+    "s_14712516f015f5": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_fd2102adaffeae0aQlN3KTFGX9",
+        "model": "claude-sonnet-5"
+      },
+      "human_author": "Omkar Khair <omkar@cloudflare.com>"
+    },
+    "s_67f3871e90274b": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_02b2ba300ffe3ZYrdpCurhGciA",
+        "model": "@cf/zai-org/glm-5.2"
+      },
+      "human_author": "Omkar Khair <omkar@cloudflare.com>"
+    }
+  }
+}
