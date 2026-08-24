@@ -20,9 +20,12 @@ export type ProvisionOutput = {
 // is an interactive IDE session; a follow-up could periodically "ping" the
 // sandbox (e.g. `sandbox.exists()`) from the client while the tab is open,
 // or use `keepAlive` with explicit `destroy()` cleanup.
+//
+// `@cloudflare/sandbox@next` has no session concept (each `exec()` call is
+// independent — pass `cwd`/`env` per call instead), so `enableDefaultSession`
+// from the stable package is gone.
 const SANDBOX_OPTIONS = {
   normalizeId: true,
-  enableDefaultSession: false,
   sleepAfter: '2h',
 } as const;
 
@@ -86,7 +89,22 @@ export class ProvisionWorkflow extends WorkflowEntrypoint<Env, ProvisionParams> 
 
         if (!projectExists.exists) {
           log(instanceId, 'checkout repo', 'cloning', { sandboxId, repo });
-          await sandbox.gitCheckout(repo, { targetDir: '/workspace/project' });
+          // `gitCheckout` is removed on @next — run git directly via exec().
+          // Unlike stable's buffered `exec(string)`, @next's `exec(argv)`
+          // resolves at launch; call `.output()` to wait for it to finish.
+          const clone = await sandbox.exec([
+            'git',
+            'clone',
+            '--',
+            repo,
+            '/workspace/project',
+          ]);
+          const result = await clone.output({ encoding: 'utf8' });
+          if (result.exitCode !== 0) {
+            throw new Error(
+              `git clone failed (exit ${result.exitCode}): ${result.stderr.trim()}`,
+            );
+          }
           log(instanceId, 'checkout repo', 'clone complete', { sandboxId });
         } else {
           log(instanceId, 'checkout repo', 'skip clone, already exists', {
@@ -112,30 +130,45 @@ export class ProvisionWorkflow extends WorkflowEntrypoint<Env, ProvisionParams> 
         });
         const sandbox = getSandbox(this.env.Sandbox, sandboxId, SANDBOX_OPTIONS);
 
+        // `command` is now argv (string[]), not a joined string.
         const processes = await sandbox.listProcesses();
-        const codeServerRunning = processes.some((p) =>
-          p.command.includes('code-server'),
+        const existing = processes.find(
+          (p) =>
+            p.state === 'running' &&
+            p.command.some((part) => part.includes('code-server')),
         );
         log(instanceId, 'start code-server', 'process check', {
           sandboxId,
           processCount: processes.length,
-          codeServerRunning,
+          codeServerRunning: Boolean(existing),
         });
 
-        if (!codeServerRunning) {
-          log(instanceId, 'start code-server', 'launching', { sandboxId });
-          const server = await sandbox.startProcess(
-            'code-server --bind-addr 0.0.0.0:8080 --auth none /workspace/project',
-          );
-          log(instanceId, 'start code-server', 'waiting for port', {
-            sandboxId,
-          });
-          await server.waitForPort(8080, { timeout: 30_000 });
-          log(instanceId, 'start code-server', 'port ready', { sandboxId });
-        } else {
+        // `startProcess` is gone on @next — `exec()` covers both short and
+        // long-running work via the same handle, resolving once the process
+        // has launched (not once it exits).
+        const server = existing
+          ? await sandbox.getProcess(existing.id)
+          : null;
+
+        if (server) {
           log(instanceId, 'start code-server', 'already running', {
             sandboxId,
           });
+        } else {
+          log(instanceId, 'start code-server', 'launching', { sandboxId });
+          const launched = await sandbox.exec([
+            'code-server',
+            '--bind-addr',
+            '0.0.0.0:8080',
+            '--auth',
+            'none',
+            '/workspace/project',
+          ]);
+          log(instanceId, 'start code-server', 'waiting for port', {
+            sandboxId,
+          });
+          await launched.waitForPort(8080, { timeout: 30_000 });
+          log(instanceId, 'start code-server', 'port ready', { sandboxId });
         }
       },
     ).catch((error) => {

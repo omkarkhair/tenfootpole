@@ -8,9 +8,6 @@
     "directory": "./public",
     "binding": "ASSETS"
   },
-  "vars": {
-    "SANDBOX_TRANSPORT": "rpc"
-  },
   "containers": [
     {
       "class_name": "Sandbox",
