@@ -134,13 +134,11 @@ async function handleProvisionStatus(
 
     if (status.status === 'complete') {
       const output = status.output as ProvisionOutput;
-      const ready = await isTunnelReady(output.url);
       log('GET /api/provision/:id', 'complete', {
         instanceId,
         url: output.url,
-        ready,
       });
-      return Response.json({ status: status.status, url: output.url, ready });
+      return Response.json({ status: status.status, url: output.url });
     }
 
     // "running"/"queued"/etc — no per-step detail is available from the
@@ -170,23 +168,4 @@ function describeProgress(instanceId: string): { phase: string; message: string 
     return { phase: 'server', message: 'Starting code-server...' };
   }
   return { phase: 'tunnel', message: 'Exposing tunnel...' };
-}
-
-// Probe the tunnel URL server-side (avoids browser CORS/opaque-response
-// limitations) so the status page only points users at a link once the
-// tunnel is actually reachable, rather than immediately after the Workflow
-// reports "complete" — quick tunnels can take a few seconds to propagate.
-async function isTunnelReady(url: string): Promise<boolean> {
-  try {
-    const response = await fetch(url, {
-      method: 'GET',
-      signal: AbortSignal.timeout(5000),
-    });
-    // Any response from the origin (even a 4xx from code-server itself)
-    // means the tunnel is up. 5xx/52x/523 status codes indicate the edge
-    // couldn't reach the origin yet.
-    return response.status < 500;
-  } catch {
-    return false;
-  }
 }

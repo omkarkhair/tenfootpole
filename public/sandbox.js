@@ -9,6 +9,7 @@ const detailElapsed = document.getElementById('detail-elapsed');
 const detailUrlRow = document.getElementById('detail-url-row');
 const detailUrl = document.getElementById('detail-url');
 const openBtn = document.getElementById('open-btn');
+const disclaimerEl = document.getElementById('disclaimer');
 const errorEl = document.getElementById('error');
 const backLink = document.getElementById('back-link');
 
@@ -43,7 +44,7 @@ function setStepState(name, state) {
 }
 
 function markStepsDoneUpTo(name) {
-  const order = ['checkout', 'server', 'tunnel', 'ready'];
+  const order = ['checkout', 'server', 'tunnel'];
   const idx = order.indexOf(name);
   order.forEach((step, i) => {
     if (i < idx) setStepState(step, 'done');
@@ -83,26 +84,17 @@ async function poll() {
     }
 
     if (data.status === 'complete') {
-      markStepsDoneUpTo('ready');
-      phaseMessageEl.textContent = 'Checking tunnel readiness...';
+      steps.forEach((s) => {
+        s.classList.remove('active');
+        s.classList.add('done');
+      });
+      phaseMessageEl.hidden = true;
       detailUrlRow.hidden = false;
       detailUrl.textContent = data.url;
       openBtn.hidden = false;
       openBtn.href = data.url;
-
-      if (data.ready) {
-        steps.forEach((s) => {
-          s.classList.remove('active');
-          s.classList.add('done');
-        });
-        openBtn.classList.remove('pending');
-        phaseMessageEl.hidden = true;
-        stopElapsedClock();
-        return;
-      }
-
-      openBtn.classList.add('pending');
-      pollTimer = setTimeout(poll, 3000);
+      disclaimerEl.hidden = false;
+      stopElapsedClock();
       return;
     }
 
