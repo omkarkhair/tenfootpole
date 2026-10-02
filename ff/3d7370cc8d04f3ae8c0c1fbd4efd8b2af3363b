@@ -1,0 +1,19 @@
+public/sandbox.html
+  s_bb778fce6f67aa::t_234227c4cdcb7c 8
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "ff3d7370cc8d04f3ae8c0c1fbd4efd8b2af3363b",
+  "prompts": {},
+  "sessions": {
+    "s_bb778fce6f67aa": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_f0311cf2bffevYcQ5aDHbbm124",
+        "model": "claude-sonnet-5-5"
+      },
+      "human_author": "Omkar Khair <omkar@cloudflare.com>"
+    }
+  }
+}
