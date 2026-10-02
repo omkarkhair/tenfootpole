@@ -1,0 +1,21 @@
+wrangler.jsonc
+  s_bb778fce6f67aa::t_a3cfcbe639ce09 9-12
+wrangler.public.jsonc
+  s_bb778fce6f67aa::t_956bcbf60cc579 15-18
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "3d7a820cc9701ed7434b2dcda25dd8004c011235",
+  "prompts": {},
+  "sessions": {
+    "s_bb778fce6f67aa": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_f0311cf2bffevYcQ5aDHbbm124",
+        "model": "claude-sonnet-5-5"
+      },
+      "human_author": "Omkar Khair <omkarkhair@gmail.com>"
+    }
+  }
+}
