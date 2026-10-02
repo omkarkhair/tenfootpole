@@ -1,0 +1,19 @@
+public/style.css
+  s_bb778fce6f67aa::t_5a67f8ad8d0aaf 548-573
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "f82233597ea105666e6355833913fafd9fecb4d4",
+  "prompts": {},
+  "sessions": {
+    "s_bb778fce6f67aa": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_f0311cf2bffevYcQ5aDHbbm124",
+        "model": "claude-sonnet-5-5"
+      },
+      "human_author": "Omkar Khair <omkarkhair@gmail.com>"
+    }
+  }
+}
