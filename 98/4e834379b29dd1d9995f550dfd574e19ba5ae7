@@ -1,0 +1,21 @@
+public/index.html
+  s_bb778fce6f67aa::t_81a5f44f8ee593 65
+public/style.css
+  s_bb778fce6f67aa::t_fc15e3d24338b8 495-547
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "984e834379b29dd1d9995f550dfd574e19ba5ae7",
+  "prompts": {},
+  "sessions": {
+    "s_bb778fce6f67aa": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_f0311cf2bffevYcQ5aDHbbm124",
+        "model": "claude-sonnet-5-5"
+      },
+      "human_author": "Omkar Khair <omkar@cloudflare.com>"
+    }
+  }
+}
