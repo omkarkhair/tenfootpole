@@ -1,0 +1,19 @@
+public/favicon.svg
+  s_bb778fce6f67aa::t_ef99c85b3d704b 1
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "e0b29e18fa7661c99fd26ff90734de99dd8caf7b",
+  "prompts": {},
+  "sessions": {
+    "s_bb778fce6f67aa": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_f0311cf2bffevYcQ5aDHbbm124",
+        "model": "claude-sonnet-5-5"
+      },
+      "human_author": "Omkar Khair <omkar@cloudflare.com>"
+    }
+  }
+}
