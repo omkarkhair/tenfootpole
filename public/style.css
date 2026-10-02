@@ -30,9 +30,6 @@ body {
   font-family: var(--font-sans);
   font-size: 16px;
   line-height: 1.5;
-  display: flex;
-  align-items: center;
-  justify-content: center;
   min-height: 100vh;
   overflow-x: hidden;
   position: relative;
@@ -52,6 +49,7 @@ body {
 }
 
 main {
+  margin: 0 auto;
   position: relative;
   z-index: 1;
   width: 100%;
@@ -312,4 +310,185 @@ select option {
   .title { font-size: 34px; }
   .card { padding: 24px 20px; }
   main { padding: 16px; gap: 24px; }
+}
+
+/* ---------- Banner ---------- */
+.banner {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  height: min(70vh, 640px);
+  min-height: 440px;
+  overflow: hidden;
+  background: var(--bg-page);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.banner-video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  /* black video background melts into the page; silhouette stays white */
+  mix-blend-mode: screen;
+  opacity: 0.9;
+}
+
+.banner-fade {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(to bottom, transparent 55%, var(--bg-page) 100%),
+    radial-gradient(ellipse at center, transparent 40%, rgba(18, 18, 18, 0.6) 100%);
+  pointer-events: none;
+}
+
+.banner-title {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  font-family: 'Dela Gothic One', Impact, 'Arial Black', sans-serif;
+  font-weight: 400;
+  text-transform: uppercase;
+  line-height: 0.9;
+  font-size: clamp(44px, 10vw, 118px);
+  letter-spacing: 0.02em;
+  transform: rotate(-6deg) skewX(-8deg);
+  pointer-events: none;
+  user-select: none;
+  animation: title-float 5s ease-in-out infinite;
+}
+
+.banner-title .line {
+  display: block;
+  color: #fff;
+  -webkit-text-stroke: 3px var(--bg-page);
+  paint-order: stroke fill;
+  text-shadow:
+    5px 5px 0 var(--orange),
+    9px 9px 0 var(--bg-page),
+    0 0 40px rgba(241, 70, 2, 0.45);
+  animation: title-in 700ms var(--ease) both;
+}
+
+.banner-title .l1 { animation-delay: 100ms; }
+.banner-title .l2 { animation-delay: 220ms; margin-left: 0.6em; color: var(--orange); text-shadow: 5px 5px 0 #fff, 9px 9px 0 var(--bg-page), 0 0 40px rgba(241, 70, 2, 0.45); }
+.banner-title .l3 { animation-delay: 340ms; margin-left: 0.2em; }
+
+.banner-title .jp {
+  position: absolute;
+  top: -0.3em;
+  right: -0.6em;
+  writing-mode: vertical-rl;
+  font-size: 0.28em;
+  letter-spacing: 0.2em;
+  color: var(--orange);
+  text-shadow: none;
+  padding: 0.3em 0.15em;
+  border-left: 2px solid var(--orange);
+}
+
+@keyframes title-in {
+  from { opacity: 0; transform: translateX(-60px) skewX(12deg); }
+  to   { opacity: 1; transform: none; }
+}
+
+@keyframes title-float {
+  0%, 100% { translate: 0 0; }
+  50%      { translate: 0 -10px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .banner-title, .banner-title .line { animation: none; }
+  .banner-video { display: none; }
+}
+
+main { padding-top: 0; padding-bottom: 48px; }
+
+/* ---------- Banner tagline ---------- */
+.banner-tagline {
+  position: absolute;
+  right: 5%;
+  bottom: 40px;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 5px;
+  text-align: right;
+  transform: skewX(-8deg);
+  font-family: 'Dela Gothic One', Impact, sans-serif;
+  text-transform: uppercase;
+  pointer-events: none;
+  animation: title-in 700ms var(--ease) 500ms both;
+}
+
+.banner-tagline span {
+  display: inline-block;
+  padding: 4px 12px;
+  line-height: 1.3;
+}
+
+.tag-top {
+  background: #fff;
+  color: var(--bg-page);
+  font-size: clamp(10px, 1.8vw, 15px);
+  letter-spacing: 0.04em;
+  box-shadow: 4px 4px 0 var(--orange);
+}
+
+.tag-bottom {
+  background: var(--orange);
+  color: #fff;
+  font-size: clamp(11px, 2vw, 16px);
+  letter-spacing: 0.06em;
+  box-shadow: 4px 4px 0 #fff;
+}
+
+/* ---------- Anime-flavoured form & footer ---------- */
+.field-label,
+.footer {
+  font-family: 'Dela Gothic One', Impact, sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 400;
+}
+
+.field-label { font-size: 12px; color: var(--text); }
+.field-label::before { content: '▶ '; color: var(--orange); }
+
+.card {
+  border: 2px solid var(--text);
+  border-radius: 4px;
+  box-shadow: 6px 6px 0 var(--orange);
+  position: relative;
+  z-index: 3;
+}
+
+input[type="text"], select { border-radius: 2px; border-width: 2px; }
+
+#poke-btn {
+  border-radius: 2px;
+  border: 2px solid var(--text);
+  font-family: 'Dela Gothic One', Impact, sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  transform: skewX(-8deg);
+  box-shadow: 4px 4px 0 var(--text);
+  transition: transform 120ms var(--ease-btn), box-shadow 120ms var(--ease-btn);
+}
+#poke-btn:hover { opacity: 1; transform: skewX(-8deg) translate(-2px, -2px); box-shadow: 6px 6px 0 var(--text); }
+#poke-btn:active { transform: skewX(-8deg) translate(3px, 3px); box-shadow: 1px 1px 0 var(--text); }
+
+.status { font-family: var(--font-mono); }
+.footer { font-size: 11px; color: var(--text-muted); }
+
+@media (max-width: 640px) {
+  .banner { align-items: flex-start; padding-top: 40px; }
+  .banner-tagline { right: 50%; translate: 50% 0; align-items: center; text-align: center; bottom: 20px; }
 }

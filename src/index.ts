@@ -1,11 +1,11 @@
-import { proxyToSandbox, type Sandbox } from '@cloudflare/sandbox';
+import { proxyToSandbox, type Sandbox as SandboxType } from '@cloudflare/sandbox';
 import type { ProvisionOutput, ProvisionParams } from './provision-workflow';
 
-export { Sandbox } from '@cloudflare/sandbox';
+export { Sandbox, ContainerProxy } from './sandbox';
 export { ProvisionWorkflow } from './provision-workflow';
 
 type Env = {
-  Sandbox: DurableObjectNamespace<Sandbox>;
+  Sandbox: DurableObjectNamespace<SandboxType>;
   PROVISION_WORKFLOW: Workflow<ProvisionParams>;
   ASSETS: Fetcher;
 };

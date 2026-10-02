@@ -4,20 +4,32 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>tenfootpole</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/style.css" />
 </head>
 <body>
   <div class="bg-grid"></div>
 
-  <main>
-    <header class="hero">
-      <h1 class="title">tenfootpole</h1>
-      <p class="tagline">
-        Some repos, you wouldn't touch with a ten-foot pole.
-        <br />For the rest, you need one.
-      </p>
-    </header>
+  <section class="banner">
+    <video class="banner-video" src="/media/bojutsu.mp4" autoplay muted loop playsinline preload="auto" aria-hidden="true"></video>
+    <div class="banner-fade"></div>
+    <h1 class="banner-title" aria-label="Ten Foot Pole">
+      <span class="jp" aria-hidden="true">十尺棒</span>
+      <span class="line l1">Ten</span>
+      <span class="line l2">Foot</span>
+      <span class="line l3">Pole</span>
+    </h1>
+    <p class="banner-tagline">
+      <span class="tag-top">Some git repos,</span>
+      <span class="tag-top">you wouldn't touch</span>
+      <span class="tag-top">with a ten-foot pole.</span>
+      <span class="tag-bottom">For the rest, you need one.</span>
+    </p>
+  </section>
 
+  <main>
     <div class="card">
       <span class="bracket bracket-tl"></span>
       <span class="bracket bracket-tr"></span>
@@ -25,7 +37,7 @@
       <span class="bracket bracket-br"></span>
 
       <form id="provision-form">
-        <label for="repo-input" class="field-label">Git endpoint</label>
+        <label for="repo-input" class="field-label">Git endpoint // 標的</label>
         <input
           type="text"
           id="repo-input"
@@ -36,7 +48,7 @@
         />
 
         <div class="settings-row">
-          <label for="instance-type" class="field-label">Container size</label>
+          <label for="instance-type" class="field-label">Container size // 強さ</label>
           <div class="select-wrapper">
             <select id="instance-type" name="instanceType">
               <option value="lite">Lite — 1/16 vCPU, 256 MiB, 2 GB</option>
@@ -50,7 +62,7 @@
         </div>
 
         <button type="submit" id="poke-btn">
-          <span class="btn-text">Poke</span>
+          <span class="btn-text">Poke!</span>
           <span class="btn-spinner"></span>
         </button>
 
