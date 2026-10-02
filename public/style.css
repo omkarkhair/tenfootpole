@@ -545,3 +545,29 @@ input[type="text"], select { border-radius: 2px; border-width: 2px; }
 .btn-text .w-a, .btn-text .w-b { display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1.1; }
 .btn-text .jp-word { font-size: 1.05em; }
 .btn-text .romaji { font-size: 10px; letter-spacing: 0.1em; opacity: 0.85; text-transform: none; margin-top: 2px; }
+
+/* ---------- Footer ---------- */
+.footer {
+  width: 100%;
+  flex-direction: column;
+  justify-content: center;
+  gap: 10px;
+  padding-top: 20px;
+  border-top: 2px solid var(--border);
+  text-align: center;
+  font-size: 11px;
+  line-height: 1.6;
+}
+.footer .sep {
+  width: 28px;
+  height: 4px;
+  background: var(--orange);
+  transform: skewX(-30deg);
+}
+.footer a {
+  color: var(--text);
+  text-decoration: none;
+  border-bottom: 2px solid var(--orange);
+  transition: color 120ms var(--ease), background 120ms var(--ease);
+}
+.footer a:hover { background: var(--orange); color: #fff; }
