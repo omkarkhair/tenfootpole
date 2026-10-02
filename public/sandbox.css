@@ -141,3 +141,24 @@
 .back-link:hover {
   color: var(--text);
 }
+
+/* Compact title banner (no video) */
+.banner-compact {
+  height: auto;
+  min-height: 0;
+  padding: 56px 24px 40px;
+}
+.banner-compact .banner-title {
+  font-size: clamp(30px, 6vw, 64px);
+}
+.repo-line {
+  text-align: center;
+  font-family: var(--font-mono);
+  font-size: 14px;
+  word-break: break-all;
+}
+
+/* Let the page grid show through behind the title */
+.banner-compact {
+  background: transparent;
+}
