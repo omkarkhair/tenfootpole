@@ -1,0 +1,21 @@
+public/sandbox.css
+  s_bb778fce6f67aa::t_900818644cf415 144-164
+public/sandbox.html
+  s_bb778fce6f67aa::t_6b4b6693b8f218 7-9,17-25,27
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "52334e4de3f32f8ed511d97083268c087b123d38",
+  "prompts": {},
+  "sessions": {
+    "s_bb778fce6f67aa": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_f0311cf2bffevYcQ5aDHbbm124",
+        "model": "claude-sonnet-5-5"
+      },
+      "human_author": "Omkar Khair <omkarkhair@gmail.com>"
+    }
+  }
+}
