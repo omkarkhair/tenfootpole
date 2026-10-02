@@ -1,0 +1,41 @@
+package.json
+  s_bb778fce6f67aa::t_d1056990589157 7,9-11
+public/app.js
+  s_bb778fce6f67aa::t_d2431e78f64622 3-6,11-12,25,37-60,74,84,89-95
+public/index.html
+  s_bb778fce6f67aa::t_16cbbb2048481b 57-62,67-68
+public/sandbox.html
+  s_bb778fce6f67aa::t_547aecf20dfc59 40,57-60,74
+public/sandbox.js
+  s_bb778fce6f67aa::t_2b63ccd1658cb7 14-15,41-53,113
+public/style.css
+  s_bb778fce6f67aa::t_01d1d0bf6b06d9 574-599
+src/index.ts
+  s_bb778fce6f67aa::t_67d2c05a992d6a 1,3,7,9-14,16-18,43-55,79,94,99-135,141,144,148,153,194-198
+src/provision-workflow.ts
+  s_bb778fce6f67aa::t_fe9bf3fa0ecd7c 4,8-9,14-15,20-32,57,59,61-87,107-110,121-126,189-190,210,213,218-233,237,244-249,251
+src/sandbox.ts
+  s_bb778fce6f67aa::t_25c5ffac164f70 6-25,27-41,44-46,50-51,54-58,60-61,64,66-74,76-79,81,83-89,92-113
+worker-configuration.d.ts
+  s_bb778fce6f67aa::t_1e40837aaa37c8 2,6-9,11,17,22-27
+wrangler.jsonc
+  s_bb778fce6f67aa::t_45638363e5142f 16,24-27,42-45,48-62
+wrangler.public.jsonc
+  s_bb778fce6f67aa::t_5a489f143aacbe 1-71
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "d9e5fb8067ccff3a6ff1bc4596af8ea2d84891ba",
+  "prompts": {},
+  "sessions": {
+    "s_bb778fce6f67aa": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_f0311cf2bffevYcQ5aDHbbm124",
+        "model": "claude-sonnet-5-5"
+      },
+      "human_author": "Omkar Khair <omkarkhair@gmail.com>"
+    }
+  }
+}
