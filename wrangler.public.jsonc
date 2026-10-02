@@ -12,7 +12,10 @@
   ],
   "assets": {
     "directory": "./public",
-    "binding": "ASSETS"
+    "binding": "ASSETS",
+    // Run the Worker before static assets so IDE preview subdomains are
+    // proxied to the sandbox instead of being served index.html for "/".
+    "run_worker_first": true
   },
   "containers": [
     {
