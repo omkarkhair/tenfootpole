@@ -492,3 +492,56 @@ input[type="text"], select { border-radius: 2px; border-width: 2px; }
   .banner { align-items: flex-start; padding-top: 40px; }
   .banner-tagline { right: 50%; translate: 50% 0; align-items: center; text-align: center; bottom: 20px; }
 }
+
+/* ---------- Button word cycle: 3s each, slash-wipe transition ---------- */
+.btn-text {
+  display: grid;
+  overflow: hidden;
+  padding: 0 6px;
+}
+.btn-text .word {
+  grid-area: 1 / 1;
+  text-align: center;
+  clip-path: polygon(-20% 0, -20% 0, -20% 100%, -20% 100%);
+  animation-duration: 6s;
+  animation-iteration-count: infinite;
+  animation-timing-function: cubic-bezier(0.7, 0, 0.2, 1);
+}
+.btn-text .w-a { animation-name: word-a; }
+.btn-text .w-b { animation-name: word-b; }
+
+@keyframes word-a {
+  0%       { clip-path: polygon(-20% 0, -20% 0, -40% 100%, -40% 100%); transform: translateX(-14px) skewX(-12deg); }
+  5%, 45%  { clip-path: polygon(-20% 0, 130% 0, 130% 100%, -40% 100%); transform: none; }
+  50%,100% { clip-path: polygon(130% 0, 130% 0, 130% 100%, 130% 100%); transform: translateX(14px) skewX(-12deg); }
+}
+@keyframes word-b {
+  0%, 50%  { clip-path: polygon(-20% 0, -20% 0, -40% 100%, -40% 100%); transform: translateX(-14px) skewX(-12deg); }
+  55%, 95% { clip-path: polygon(-20% 0, 130% 0, 130% 100%, -40% 100%); transform: none; }
+  100%     { clip-path: polygon(130% 0, 130% 0, 130% 100%, 130% 100%); transform: translateX(14px) skewX(-12deg); }
+}
+
+/* impact flash on the button at each swap */
+#poke-btn { position: relative; overflow: hidden; }
+#poke-btn::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(100deg, transparent 40%, rgba(255,255,255,0.85) 50%, transparent 60%);
+  transform: translateX(-120%);
+  animation: slash 3s infinite;
+  pointer-events: none;
+}
+@keyframes slash {
+  0%, 82% { transform: translateX(-120%); }
+  100%    { transform: translateX(120%); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .btn-text .word, #poke-btn::after { animation: none; }
+  .btn-text .w-a { clip-path: none; }
+}
+
+.btn-text .w-a, .btn-text .w-b { display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1.1; }
+.btn-text .jp-word { font-size: 1.05em; }
+.btn-text .romaji { font-size: 10px; letter-spacing: 0.1em; opacity: 0.85; text-transform: none; margin-top: 2px; }
