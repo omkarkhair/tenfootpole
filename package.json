@@ -4,9 +4,11 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "wrangler dev",
+    "dev": "wrangler dev --port 8787 --var PREVIEW_HOSTNAME:localhost:8787 --var MAX_CONTAINERS:10 --var SESSION_MAX_MINUTES:10",
     "deploy": "wrangler deploy",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "deploy:public": "wrangler deploy --config wrangler.public.jsonc",
+    "types": "wrangler types --strict-vars false"
   },
   "dependencies": {
     "@cloudflare/sandbox": "0.13.0-next.738.2"

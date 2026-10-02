@@ -48,29 +48,23 @@
           spellcheck="false"
         />
 
-        <div class="settings-row">
-          <label for="instance-type" class="field-label">Container size // 強さ</label>
-          <div class="select-wrapper">
-            <select id="instance-type" name="instanceType">
-              <option value="lite">Lite — 1/16 vCPU, 256 MiB, 2 GB</option>
-              <option value="basic" selected>Basic — 1/4 vCPU, 1 GiB, 4 GB</option>
-              <option value="standard-1">Standard-1 — 1/2 vCPU, 4 GiB, 8 GB</option>
-              <option value="standard-2">Standard-2 — 1 vCPU, 6 GiB, 12 GB</option>
-              <option value="standard-3">Standard-3 — 2 vCPU, 8 GiB, 16 GB</option>
-              <option value="standard-4">Standard-4 — 4 vCPU, 12 GiB, 20 GB</option>
-            </select>
-          </div>
-        </div>
-
         <button type="submit" id="poke-btn">
           <span class="btn-text" aria-label="Hajime, begin"><span class="word w-a"><span class="jp-word">始め!</span><small class="romaji">(Hajime)</small></span><span class="word w-b">Begin!</span></span>
           <span class="btn-spinner"></span>
         </button>
 
         <div id="status" class="status" hidden></div>
+        <div id="capacity" class="capacity" hidden>
+          <p id="capacity-msg"></p>
+          <a id="deploy-btn" class="deploy-link" href="https://deploy.workers.cloudflare.com/?url=https://github.com/omkarkhair/tenfootpole" target="_blank" rel="noopener">
+            <img src="https://deploy.workers.cloudflare.com/button" alt="Deploy to Cloudflare" />
+          </a>
+        </div>
         <div id="error" class="error" hidden></div>
       </form>
     </div>
+
+    <p class="slots" id="slots" hidden></p>
 
     <footer class="footer">
       <span>Isolated cloud IDE powered by <a href="https://developers.cloudflare.com/sandbox/" target="_blank" rel="noopener">Cloudflare Sandbox</a></span>

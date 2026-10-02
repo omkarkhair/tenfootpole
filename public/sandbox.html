@@ -37,7 +37,7 @@
           </div>
           <div class="step" data-step="tunnel">
             <span class="step-dot"></span>
-            <span class="step-label">Exposing tunnel</span>
+            <span class="step-label">Exposing IDE</span>
           </div>
         </div>
 
@@ -54,6 +54,10 @@
             <span class="detail-key">Elapsed</span>
             <span class="detail-value" id="detail-elapsed">0s</span>
           </div>
+          <div class="detail-row" id="detail-expires-row" hidden>
+            <span class="detail-key">Session ends in</span>
+            <span class="detail-value" id="detail-expires">&mdash;</span>
+          </div>
           <div class="detail-row" id="detail-url-row" hidden>
             <span class="detail-key">Preview URL</span>
             <span class="detail-value">
@@ -67,7 +71,7 @@
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7"/><path d="M7 7h10v10"/></svg>
         </a>
         <p class="disclaimer" id="disclaimer" hidden>
-          The tunnel can take a few extra seconds to come online after this appears — if it 404s or hangs, wait a moment and try again.
+          The IDE can take a few extra seconds to come online after this appears — if it 404s or hangs, wait a moment and try again. This sandbox is destroyed when the session timer runs out.
         </p>
 
         <div id="error" class="error" hidden></div>

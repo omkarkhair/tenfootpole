@@ -1,20 +1,21 @@
-import { proxyToSandbox, type Sandbox as SandboxType } from '@cloudflare/sandbox';
+import { proxyToSandbox } from '@cloudflare/sandbox';
 import type { ProvisionOutput, ProvisionParams } from './provision-workflow';
+import { maxContainers, sessionMinutes, type Registry } from './registry';
 
 export { Sandbox, ContainerProxy } from './sandbox';
 export { ProvisionWorkflow } from './provision-workflow';
+export { Registry } from './registry';
 
-type Env = {
-  Sandbox: DurableObjectNamespace<SandboxType>;
-  PROVISION_WORKFLOW: Workflow<ProvisionParams>;
-  ASSETS: Fetcher;
-};
+// Sandboxes have no SSH egress (only HTTP(S) can be intercepted), so only
+// HTTPS git endpoints are accepted.
+const GIT_URL_PATTERNS = [/^https:\/\/[a-zA-Z0-9.-]+\/[\w.-]+\/[\w.-]+(\.git)?$/];
 
-const GIT_URL_PATTERNS = [
-  /^https:\/\/[a-zA-Z0-9.-]+\/[\w.-]+\/[\w.-]+(\.git)?$/,
-  /^git@[a-zA-Z0-9.-]+:[\w.-]+\/[\w.-]+(\.git)?$/,
-  /^ssh:\/\/git@[a-zA-Z0-9.-]+\/[\w.-]+\/[\w.-]+(\.git)?$/,
-];
+const DEPLOY_URL =
+  'https://deploy.workers.cloudflare.com/?url=https://github.com/omkarkhair/tenfootpole';
+
+function registry(env: Env): DurableObjectStub<Registry> {
+  return env.REGISTRY.get(env.REGISTRY.idFromName('global'));
+}
 
 function isValidGitUrl(url: string): boolean {
   return GIT_URL_PATTERNS.some((p) => p.test(url.trim()));
@@ -39,6 +40,19 @@ export default {
 
     const url = new URL(request.url);
 
+    if (url.pathname === '/api/config' && request.method === 'GET') {
+      const status = await registry(env).status();
+      return Response.json(
+        {
+          active: status.active,
+          max: maxContainers(env),
+          sessionMinutes: sessionMinutes(env),
+          deployUrl: DEPLOY_URL,
+        },
+        { headers: { 'cache-control': 'no-store' } },
+      );
+    }
+
     if (url.pathname === '/api/provision' && request.method === 'POST') {
       return handleProvision(request, env);
     }
@@ -62,7 +76,7 @@ export default {
 };
 
 async function handleProvision(request: Request, env: Env): Promise<Response> {
-  let body: { repo?: string; instanceType?: string };
+  let body: { repo?: string };
   try {
     body = await request.json();
   } catch {
@@ -77,8 +91,45 @@ async function handleProvision(request: Request, env: Env): Promise<Response> {
   if (!isValidGitUrl(repo)) {
     log('POST /api/provision', 'invalid git url', { repo });
     return Response.json(
-      { error: 'Invalid git URL. Use HTTPS (https://...) or SSH (git@...) format.' },
+      { error: 'Invalid git URL. Use an HTTPS endpoint (https://host/owner/repo).' },
       { status: 400 },
+    );
+  }
+
+  // Quick tunnels need real egress; with egress denied the only way to reach
+  // the IDE is a preview hostname routed through this Worker.
+  if (!env.PREVIEW_HOSTNAME && env.EGRESS_MODE !== 'open') {
+    log('POST /api/provision', 'misconfigured');
+    return Response.json(
+      {
+        error:
+          'Server misconfigured: set PREVIEW_HOSTNAME (wildcard domain) or EGRESS_MODE=open so the IDE can be exposed.',
+      },
+      { status: 500 },
+    );
+  }
+
+  // Every request gets its own random sandbox, even for a repo that was
+  // already pulled: 128 bits of randomness makes the id (and therefore the
+  // preview URL) unguessable.
+  const sandboxId = crypto.randomUUID().replaceAll('-', '');
+
+  const lease = await registry(env).acquire(sandboxId);
+  if (!lease.ok) {
+    log('POST /api/provision', 'at capacity', {
+      active: lease.active,
+      max: lease.max,
+    });
+    return Response.json(
+      {
+        code: 'at_capacity',
+        error: `All ${lease.max} sandboxes are in use right now. Try again in a few minutes, or deploy your own with no limits.`,
+        active: lease.active,
+        max: lease.max,
+        retryAfterSec: lease.retryAfterSec,
+        deployUrl: DEPLOY_URL,
+      },
+      { status: 503, headers: { 'retry-after': String(lease.retryAfterSec) } },
     );
   }
 
@@ -87,17 +138,19 @@ async function handleProvision(request: Request, env: Env): Promise<Response> {
     // `InstanceStatus` doesn't expose timestamps) so the status endpoint can
     // report a real elapsed time and derive a human-readable phase, instead
     // of just "running" with no detail.
-    const instanceId = `prov-${Date.now().toString(36)}-${crypto.randomUUID().slice(0, 8)}`;
+    const instanceId = `prov-${Date.now().toString(36)}-${crypto.randomUUID()}`;
     const instance = await env.PROVISION_WORKFLOW.create({
       id: instanceId,
-      params: { repo },
+      params: { repo, sandboxId } satisfies ProvisionParams,
     });
     log('POST /api/provision', 'workflow created', {
       repo,
+      sandboxId,
       instanceId: instance.id,
     });
     return Response.json({ instanceId: instance.id });
   } catch (error) {
+    await registry(env).release(sandboxId);
     const message =
       error instanceof Error ? error.message : 'Failed to start provisioning';
     log('POST /api/provision', 'workflow create failed', {
@@ -138,7 +191,11 @@ async function handleProvisionStatus(
         instanceId,
         url: output.url,
       });
-      return Response.json({ status: status.status, url: output.url });
+      return Response.json({
+        status: status.status,
+        url: output.url,
+        expiresAt: output.expiresAt,
+      });
     }
 
     // "running"/"queued"/etc — no per-step detail is available from the

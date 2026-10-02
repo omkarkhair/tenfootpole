@@ -11,6 +11,8 @@ const detailUrl = document.getElementById('detail-url');
 const openBtn = document.getElementById('open-btn');
 const disclaimerEl = document.getElementById('disclaimer');
 const errorEl = document.getElementById('error');
+const detailExpiresRow = document.getElementById('detail-expires-row');
+const detailExpires = document.getElementById('detail-expires');
 const backLink = document.getElementById('back-link');
 
 // Path is /sandbox/<instanceId>
@@ -34,6 +36,19 @@ function startElapsedClock() {
 
 function stopElapsedClock() {
   if (elapsedInterval) clearInterval(elapsedInterval);
+}
+
+function startSessionCountdown(expiresAt) {
+  detailExpiresRow.hidden = false;
+  const tick = () => {
+    const left = Math.max(0, Math.round((expiresAt - Date.now()) / 1000));
+    detailExpires.textContent = left === 0
+      ? 'expired'
+      : `${Math.floor(left / 60)}m ${String(left % 60).padStart(2, '0')}s`;
+    if (left === 0) clearInterval(timer);
+  };
+  const timer = setInterval(tick, 1000);
+  tick();
 }
 
 function setStepState(name, state) {
@@ -95,6 +110,7 @@ async function poll() {
       openBtn.href = data.url;
       disclaimerEl.hidden = false;
       stopElapsedClock();
+      if (data.expiresAt) startSessionCountdown(data.expiresAt);
       return;
     }
 

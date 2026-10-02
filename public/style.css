@@ -571,3 +571,29 @@ input[type="text"], select { border-radius: 2px; border-width: 2px; }
   transition: color 120ms var(--ease), background 120ms var(--ease);
 }
 .footer a:hover { background: var(--orange); color: #fff; }
+
+/* ---------- Capacity / slots ---------- */
+.capacity {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  padding: 16px;
+  text-align: center;
+  font-size: 14px;
+  border: 2px solid var(--orange);
+  background: var(--orange-dim);
+  border-radius: 2px;
+}
+.capacity[hidden] { display: none; }
+.deploy-link img { display: block; height: 32px; }
+
+.slots {
+  font-family: 'Dela Gothic One', Impact, sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+.slots[hidden] { display: none; }
+.slots.full { color: var(--orange); }

@@ -4,6 +4,12 @@
   "main": "src/index.ts",
   "compatibility_date": "2026-08-05",
   "compatibility_flags": ["nodejs_compat"],
+  // Landing page on the apex; IDE preview URLs on *.tenfootpole.dev.
+  // Requires a proxied wildcard DNS record (*) for the zone.
+  "routes": [
+    { "pattern": "tenfootpole.dev", "custom_domain": true },
+    { "pattern": "*.tenfootpole.dev/*", "zone_name": "tenfootpole.dev" }
+  ],
   "assets": {
     "directory": "./public",
     "binding": "ASSETS"
@@ -13,7 +19,7 @@
       "class_name": "Sandbox",
       "image": "./Dockerfile",
       "instance_type": "basic",
-      "max_instances": 100
+      "max_instances": 10
     }
   ],
   "durable_objects": {
@@ -46,19 +52,18 @@
     }
   ],
   "vars": {
-    // Max sandboxes alive at once. 0 = unlimited (self-hosted default).
-    "MAX_CONTAINERS": "0",
+    // Public site: hard cap of 10 concurrent sandboxes, 10-minute sessions.
+    "MAX_CONTAINERS": "10",
     // Hard session length; the sandbox is destroyed when it elapses.
-    "SESSION_MAX_MINUTES": "60",
+    "SESSION_MAX_MINUTES": "10",
     // "deny" = sandboxes have no internet (every attempt is logged and
-    // blocked). "open" = full network access (HTTP(S) still logged). Open is
-    // the self-hosted default because quick tunnels need it; set it to
-    // "deny" once PREVIEW_HOSTNAME is configured.
-    "EGRESS_MODE": "open",
+    // blocked). "open" = HTTP(S) allowed (still logged). Needed for quick
+    // tunnels and for anything that must download packages.
+    "EGRESS_MODE": "deny",
     // Wildcard domain for IDE preview URLs (e.g. "example.com" with
     // *.example.com routed to this Worker). Leave empty to use quick
     // tunnels instead, which require EGRESS_MODE=open.
-    "PREVIEW_HOSTNAME": ""
+    "PREVIEW_HOSTNAME": "tenfootpole.dev"
   },
   "observability": {
     "enabled": true

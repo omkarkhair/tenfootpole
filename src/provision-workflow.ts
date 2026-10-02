@@ -1,33 +1,35 @@
 import { WorkflowEntrypoint, type WorkflowStep } from 'cloudflare:workers';
 import type { WorkflowEvent } from 'cloudflare:workers';
 import { getSandbox } from '@cloudflare/sandbox';
+import { sessionMinutes, type Registry } from './registry';
 
 export type ProvisionParams = {
   repo: string;
+  /** Random, unguessable id minted per request; never derived from the repo. */
+  sandboxId: string;
 };
 
 export type ProvisionOutput = {
   url: string;
+  /** Epoch ms at which the sandbox is destroyed. */
+  expiresAt: number;
 };
 
 // Applied on first getSandbox() call for a given sandbox ID.
 //
-// Note: traffic through an exposed tunnel/port goes straight to the
-// container and does NOT reset this inactivity timer — only calls made
-// through the Sandbox DO (via the SDK) do. A user actively using code-server
-// through the tunnel can still have their sandbox go to sleep and the tunnel
-// die underneath them. Extend the default (10m) generously here since this
-// is an interactive IDE session; a follow-up could periodically "ping" the
-// sandbox (e.g. `sandbox.exists()`) from the client while the tab is open,
-// or use `keepAlive` with explicit `destroy()` cleanup.
-//
-// `@cloudflare/sandbox@next` has no session concept (each `exec()` call is
-// independent — pass `cwd`/`env` per call instead), so `enableDefaultSession`
-// from the stable package is gone.
-const SANDBOX_OPTIONS = {
-  normalizeId: true,
-  sleepAfter: '2h',
-} as const;
+// The Registry Durable Object enforces the hard session limit by destroying
+// the sandbox when its lease expires. `sleepAfter` is only a backstop (in case
+// that destroy fails), so it is set slightly past the session length.
+function sandboxOptions(env: Env) {
+  return {
+    normalizeId: true,
+    sleepAfter: `${sessionMinutes(env) + 2}m`,
+  } as const;
+}
+
+function registryStub(env: Env): DurableObjectStub<Registry> {
+  return env.REGISTRY.get(env.REGISTRY.idFromName('global'));
+}
 
 function log(
   instanceId: string,
@@ -52,24 +54,37 @@ export class ProvisionWorkflow extends WorkflowEntrypoint<Env, ProvisionParams> 
     event: WorkflowEvent<ProvisionParams>,
     step: WorkflowStep,
   ): Promise<ProvisionOutput> {
-    const { repo } = event.payload;
+    const { repo, sandboxId } = event.payload;
     const { instanceId } = event;
+    const registry = registryStub(this.env);
 
-    log(instanceId, 'run', 'start', { repo });
+    log(instanceId, 'run', 'start', { repo, sandboxId });
 
-    const sandboxId = await step.do('derive sandbox id', async () => {
-      log(instanceId, 'derive sandbox id', 'start');
-      const digest = await crypto.subtle.digest(
-        'SHA-256',
-        new TextEncoder().encode(repo),
-      );
-      const id = Array.from(new Uint8Array(digest))
-        .map((b) => b.toString(16).padStart(2, '0'))
-        .join('')
-        .slice(0, 8);
-      log(instanceId, 'derive sandbox id', 'done', { sandboxId: id });
-      return id;
-    });
+    try {
+      return await this.provision(event, step, registry);
+    } catch (error) {
+      // Free the slot and the container right away instead of waiting for
+      // the lease to expire.
+      log(instanceId, 'run', 'failed, releasing slot', {
+        sandboxId,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      await registry.release(sandboxId).catch(() => {});
+      await getSandbox(this.env.Sandbox, sandboxId)
+        .destroy()
+        .catch(() => {});
+      throw error;
+    }
+  }
+
+  private async provision(
+    event: WorkflowEvent<ProvisionParams>,
+    step: WorkflowStep,
+    registry: DurableObjectStub<Registry>,
+  ): Promise<ProvisionOutput> {
+    const { repo, sandboxId } = event.payload;
+    const { instanceId } = event;
+    const SANDBOX_OPTIONS = sandboxOptions(this.env);
 
     await step.do(
       'checkout repo',
@@ -89,6 +104,10 @@ export class ProvisionWorkflow extends WorkflowEntrypoint<Env, ProvisionParams> 
 
         if (!projectExists.exists) {
           log(instanceId, 'checkout repo', 'cloning', { sandboxId, repo });
+          // The sandbox has no internet. Open a hole to the repo's git host
+          // for the duration of the clone only.
+          const gitHost = new URL(repo).hostname;
+          await sandbox.setOutboundByHost(gitHost, 'allowGitHost');
           // `gitCheckout` is removed on @next — run git directly via exec().
           // Unlike stable's buffered `exec(string)`, @next's `exec(argv)`
           // resolves at launch; call `.output()` to wait for it to finish.
@@ -99,7 +118,12 @@ export class ProvisionWorkflow extends WorkflowEntrypoint<Env, ProvisionParams> 
             repo,
             '/workspace/project',
           ]);
-          const result = await clone.output({ encoding: 'utf8' });
+          let result;
+          try {
+            result = await clone.output({ encoding: 'utf8' });
+          } finally {
+            await sandbox.removeOutboundByHost(gitHost);
+          }
           if (result.exitCode !== 0) {
             throw new Error(
               `git clone failed (exit ${result.exitCode}): ${result.stderr.trim()}`,
@@ -162,6 +186,8 @@ export class ProvisionWorkflow extends WorkflowEntrypoint<Env, ProvisionParams> 
             '0.0.0.0:8080',
             '--auth',
             'none',
+            '--disable-telemetry',
+            '--disable-update-check',
             '/workspace/project',
           ]);
           log(instanceId, 'start code-server', 'waiting for port', {
@@ -181,32 +207,47 @@ export class ProvisionWorkflow extends WorkflowEntrypoint<Env, ProvisionParams> 
 
     const url = await step
       .do(
-        'expose tunnel',
+        'expose ide',
         { retries: { limit: 5, delay: '10 seconds', backoff: 'exponential' } },
         async (ctx) => {
-          log(instanceId, 'expose tunnel', 'start', {
+          log(instanceId, 'expose ide', 'start', {
             sandboxId,
             attempt: ctx.attempt,
           });
           const sandbox = getSandbox(this.env.Sandbox, sandboxId, SANDBOX_OPTIONS);
-          const tunnel = await sandbox.tunnels.get(8080);
-          log(instanceId, 'expose tunnel', 'done', {
-            sandboxId,
-            url: tunnel.url,
-          });
-          return tunnel.url;
+
+          // Preview URLs are routed through this Worker, so they work with
+          // no sandbox egress at all. They need a wildcard domain.
+          // Quick tunnels (the fallback) run `cloudflared` inside the
+          // container and need real outbound access (EGRESS_MODE=open).
+          let exposed: string;
+          if (this.env.PREVIEW_HOSTNAME) {
+            const preview = await sandbox.exposePort(8080, {
+              hostname: this.env.PREVIEW_HOSTNAME,
+            });
+            exposed = preview.url;
+          } else {
+            exposed = (await sandbox.tunnels.get(8080)).url;
+          }
+          log(instanceId, 'expose ide', 'done', { sandboxId, url: exposed });
+          return exposed;
         },
       )
       .catch((error) => {
-        log(instanceId, 'expose tunnel', 'failed', {
+        log(instanceId, 'expose ide', 'failed', {
           sandboxId,
           error: error instanceof Error ? error.message : String(error),
         });
         throw error;
       });
 
-    log(instanceId, 'run', 'complete', { sandboxId, url });
+    // Provisioning is done: start the hard session clock.
+    const { expiresAt } = await step.do('start session clock', async () =>
+      registry.markReady(sandboxId),
+    );
 
-    return { url };
+    log(instanceId, 'run', 'complete', { sandboxId, url, expiresAt });
+
+    return { url, expiresAt };
   }
 }
