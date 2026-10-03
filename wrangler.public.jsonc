@@ -60,6 +60,8 @@
     // or "dynamic/<route>". Gateway "default" is auto-created.
     "AI_MODEL": "@cf/zai-org/glm-5.3-flash",
     "AI_GATEWAY_ID": "default",
+    // Per-scanner time limit (seconds) for the provision-time security scan.
+    "SCAN_TIMEOUT_SEC": "90",
     // Public site: hard cap of 10 concurrent sandboxes, 10-minute sessions.
     "MAX_CONTAINERS": "10",
     // Hard session length; the sandbox is destroyed when it elapses.

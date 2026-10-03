@@ -202,6 +202,7 @@ async function handleProvisionStatus(
         status: status.status,
         url: output.url,
         expiresAt: output.expiresAt,
+        scan: output.scan,
       });
     }
 

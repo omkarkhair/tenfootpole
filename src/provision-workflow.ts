@@ -14,6 +14,14 @@ export type ProvisionOutput = {
   url: string;
   /** Epoch ms at which the sandbox is destroyed. */
   expiresAt: number;
+  scan: ScanSummary;
+};
+
+export type ScanSummary = {
+  verdict: string;
+  incomplete: boolean;
+  counts?: { high: number; total: number };
+  error?: string;
 };
 
 // Applied on first getSandbox() call for a given sandbox ID.
@@ -145,7 +153,36 @@ export class ProvisionWorkflow extends WorkflowEntrypoint<Env, ProvisionParams> 
       throw error;
     });
 
-    await step.do(
+    // The security scan runs alongside code-server startup so it adds no
+    // wall-clock time. It never fails provisioning: a broken scanner yields an
+    // `incomplete` summary instead.
+    const scanPromise = step.do(
+      'security scan',
+      { retries: { limit: 1, delay: '2 seconds' } },
+      async (): Promise<ScanSummary> => {
+        const sandbox = getSandbox(this.env.Sandbox, sandboxId, SANDBOX_OPTIONS);
+        const perScanner = Number(this.env.SCAN_TIMEOUT_SEC) || 90;
+        try {
+          const run = await sandbox.exec([
+            'node', '/opt/tfp/scan.mjs', '/workspace/project', String(perScanner),
+          ]);
+          // Two scanners run in sequence; allow both plus slack.
+          const result = await run.output({ encoding: 'utf8' });
+          if (result.exitCode !== 0) {
+            throw new Error(result.stderr.trim() || `exit ${result.exitCode}`);
+          }
+          const summary = JSON.parse(result.stdout.trim().split('\n').pop() ?? '{}');
+          log(instanceId, 'security scan', 'done', { sandboxId, ...summary });
+          return summary as ScanSummary;
+        } catch (error) {
+          const message = error instanceof Error ? error.message : String(error);
+          log(instanceId, 'security scan', 'failed', { sandboxId, error: message });
+          return { verdict: 'unknown', incomplete: true, error: message };
+        }
+      },
+    );
+
+    const codeServerPromise = step.do(
       'start code-server',
       { retries: { limit: 3, delay: '5 seconds', backoff: 'exponential' } },
       async (ctx) => {
@@ -210,6 +247,8 @@ export class ProvisionWorkflow extends WorkflowEntrypoint<Env, ProvisionParams> 
       throw error;
     });
 
+    const [scan] = await Promise.all([scanPromise, codeServerPromise]);
+
     const url = await step
       .do(
         'expose ide',
@@ -251,8 +290,8 @@ export class ProvisionWorkflow extends WorkflowEntrypoint<Env, ProvisionParams> 
       registry.markReady(sandboxId),
     );
 
-    log(instanceId, 'run', 'complete', { sandboxId, url, expiresAt });
+    log(instanceId, 'run', 'complete', { sandboxId, url, expiresAt, scan });
 
-    return { url, expiresAt };
+    return { url, expiresAt, scan };
   }
 }
