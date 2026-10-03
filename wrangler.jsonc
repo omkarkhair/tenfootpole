@@ -16,7 +16,9 @@
       "class_name": "Sandbox",
       "image": "./Dockerfile",
       "instance_type": "standard",
-      "max_instances": 100
+      "max_instances": 100,
+      // Let live sessions finish (60 min + 2 min margin) before a deploy replaces them.
+      "rollout_active_grace_period": 3720
     }
   ],
   "durable_objects": {
