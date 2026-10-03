@@ -40,6 +40,12 @@
             <span class="step-dot"></span>
             <span class="step-label">Cloning repository</span>
           </div>
+          <div class="step" data-step="scan">
+            <span class="step-dot"></span>
+            <span class="step-label">Scanning repo
+              <span class="step-sub" id="scan-sub">OSV-scanner (known-malicious packages) + auto-run hooks</span>
+            </span>
+          </div>
           <div class="step" data-step="server">
             <span class="step-dot"></span>
             <span class="step-label">Starting code-server</span>
@@ -73,6 +79,15 @@
               <code id="detail-url"></code>
             </span>
           </div>
+        </div>
+
+        <div class="scan-result" id="scan-result" hidden>
+          <div class="scan-head">
+            <span class="detail-key">Security scan</span>
+            <span class="verdict" id="scan-verdict"></span>
+          </div>
+          <div class="scan-rows" id="scan-rows"></div>
+          <p class="scan-note" id="scan-note" hidden></p>
         </div>
 
         <a id="open-btn" class="open-btn" href="#" target="_blank" rel="noopener noreferrer" hidden>

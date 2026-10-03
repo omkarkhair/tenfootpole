@@ -2,7 +2,7 @@ import { WorkflowEntrypoint, type WorkflowStep } from 'cloudflare:workers';
 import type { WorkflowEvent } from 'cloudflare:workers';
 import { getSandbox } from '@cloudflare/sandbox';
 import { AI_HOST } from './ai-proxy';
-import { sessionMinutes, type Registry } from './registry';
+import { sessionMinutes, type Registry, type StepName, type StepState } from './registry';
 
 export type ProvisionParams = {
   repo: string;
@@ -17,9 +17,17 @@ export type ProvisionOutput = {
   scan: ScanSummary;
 };
 
+export type ScannerResult = {
+  status: 'ok' | 'timeout' | 'error';
+  ms: number;
+  items?: number;
+  note?: string;
+};
+
 export type ScanSummary = {
   verdict: string;
   incomplete: boolean;
+  scanners?: { autoexec?: ScannerResult; osv?: ScannerResult };
   counts?: { high: number; total: number };
   error?: string;
 };
@@ -59,6 +67,8 @@ function log(
 }
 
 export class ProvisionWorkflow extends WorkflowEntrypoint<Env, ProvisionParams> {
+  private progress: (step: StepName, state: StepState) => Promise<void> = async () => {};
+
   async run(
     event: WorkflowEvent<ProvisionParams>,
     step: WorkflowStep,
@@ -68,6 +78,9 @@ export class ProvisionWorkflow extends WorkflowEntrypoint<Env, ProvisionParams> 
     const registry = registryStub(this.env);
 
     log(instanceId, 'run', 'start', { repo, sandboxId });
+    // Progress is cosmetic: never let it break provisioning.
+    this.progress = (step, state) =>
+      registry.setProgress(instanceId, step, state).catch(() => {});
 
     try {
       return await this.provision(event, step, registry);
@@ -99,6 +112,7 @@ export class ProvisionWorkflow extends WorkflowEntrypoint<Env, ProvisionParams> 
       'checkout repo',
       { retries: { limit: 3, delay: '5 seconds', backoff: 'exponential' } },
       async (ctx) => {
+        await this.progress('checkout', 'active');
         log(instanceId, 'checkout repo', 'start', {
           sandboxId,
           attempt: ctx.attempt,
@@ -145,7 +159,8 @@ export class ProvisionWorkflow extends WorkflowEntrypoint<Env, ProvisionParams> 
           });
         }
       },
-    ).catch((error) => {
+    ).then(() => this.progress('checkout', 'done')).catch(async (error) => {
+      await this.progress('checkout', 'error');
       log(instanceId, 'checkout repo', 'failed', {
         sandboxId,
         error: error instanceof Error ? error.message : String(error),
@@ -160,6 +175,7 @@ export class ProvisionWorkflow extends WorkflowEntrypoint<Env, ProvisionParams> 
       'security scan',
       { retries: { limit: 1, delay: '2 seconds' } },
       async (): Promise<ScanSummary> => {
+        await this.progress('scan', 'active');
         const sandbox = getSandbox(this.env.Sandbox, sandboxId, SANDBOX_OPTIONS);
         const perScanner = Number(this.env.SCAN_TIMEOUT_SEC) || 90;
         try {
@@ -182,10 +198,16 @@ export class ProvisionWorkflow extends WorkflowEntrypoint<Env, ProvisionParams> 
       },
     );
 
+    const scanDone = scanPromise.then(async (r) => {
+      await this.progress('scan', r.incomplete ? 'error' : 'done');
+      return r;
+    });
+
     const codeServerPromise = step.do(
       'start code-server',
       { retries: { limit: 3, delay: '5 seconds', backoff: 'exponential' } },
       async (ctx) => {
+        await this.progress('server', 'active');
         log(instanceId, 'start code-server', 'start', {
           sandboxId,
           attempt: ctx.attempt,
@@ -239,7 +261,8 @@ export class ProvisionWorkflow extends WorkflowEntrypoint<Env, ProvisionParams> 
           log(instanceId, 'start code-server', 'port ready', { sandboxId });
         }
       },
-    ).catch((error) => {
+    ).then(() => this.progress('server', 'done')).catch(async (error) => {
+      await this.progress('server', 'error');
       log(instanceId, 'start code-server', 'failed', {
         sandboxId,
         error: error instanceof Error ? error.message : String(error),
@@ -247,13 +270,14 @@ export class ProvisionWorkflow extends WorkflowEntrypoint<Env, ProvisionParams> 
       throw error;
     });
 
-    const [scan] = await Promise.all([scanPromise, codeServerPromise]);
+    const [scan] = await Promise.all([scanDone, codeServerPromise]);
 
     const url = await step
       .do(
         'expose ide',
         { retries: { limit: 5, delay: '10 seconds', backoff: 'exponential' } },
         async (ctx) => {
+          await this.progress('tunnel', 'active');
           log(instanceId, 'expose ide', 'start', {
             sandboxId,
             attempt: ctx.attempt,
@@ -284,6 +308,8 @@ export class ProvisionWorkflow extends WorkflowEntrypoint<Env, ProvisionParams> 
         });
         throw error;
       });
+
+    await this.progress('tunnel', 'done');
 
     // Provisioning is done: start the hard session clock.
     const { expiresAt } = await step.do('start session clock', async () =>

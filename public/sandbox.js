@@ -14,6 +14,11 @@ const errorEl = document.getElementById('error');
 const detailExpiresRow = document.getElementById('detail-expires-row');
 const detailExpires = document.getElementById('detail-expires');
 const backLink = document.getElementById('back-link');
+const scanResultEl = document.getElementById('scan-result');
+const scanVerdictEl = document.getElementById('scan-verdict');
+const scanRowsEl = document.getElementById('scan-rows');
+const scanNoteEl = document.getElementById('scan-note');
+const scanSubEl = document.getElementById('scan-sub');
 
 // Path is /sandbox/<instanceId>
 const instanceId = decodeURIComponent(
@@ -68,6 +73,47 @@ function markStepsDoneUpTo(name) {
   });
 }
 
+// Real per-step state from the workflow ({checkout: 'done', scan: 'active', ...}).
+function applySteps(stepStates) {
+  for (const step of steps) {
+    const state = stepStates[step.dataset.step];
+    step.classList.remove('active', 'done', 'error');
+    if (state) step.classList.add(state);
+  }
+}
+
+function describeScanner(label, r) {
+  if (!r) return `${label}: not run`;
+  if (r.status === 'ok') {
+    if (r.note) return `${label}: ${r.note}`;
+    return `${label}: ${r.items ?? 0} finding${r.items === 1 ? '' : 's'} (${(r.ms / 1000).toFixed(1)}s)`;
+  }
+  return `${label}: ${r.status === 'timeout' ? 'timed out' : 'failed'}`;
+}
+
+function showScan(scan) {
+  if (!scan) return;
+  const v = scan.verdict || 'unknown';
+  scanVerdictEl.textContent = v;
+  scanVerdictEl.className = 'verdict ' + (v.includes('malicious') ? 'malicious' : v);
+  scanRowsEl.textContent = '';
+  const rows = [
+    describeScanner('OSV-scanner (malicious packages)', scan.scanners?.osv),
+    describeScanner('Auto-run hooks', scan.scanners?.autoexec),
+  ];
+  for (const text of rows) {
+    const row = document.createElement('div');
+    row.className = 'scan-row';
+    row.textContent = text;
+    scanRowsEl.appendChild(row);
+  }
+  scanNoteEl.hidden = false;
+  scanNoteEl.textContent = scan.incomplete
+    ? 'Scan incomplete: a scanner failed or timed out, so treat this verdict with caution.'
+    : 'Details are in /workspace/.tfp/findings.json. Run `pi` in the IDE terminal to review them.';
+  scanResultEl.hidden = false;
+}
+
 function showError(message) {
   stopElapsedClock();
   if (pollTimer) clearTimeout(pollTimer);
@@ -103,6 +149,14 @@ async function poll() {
         s.classList.remove('active');
         s.classList.add('done');
       });
+      // The scan step is non-fatal: show it as errored if it was incomplete.
+      if (data.scan?.incomplete) {
+        const scanStep = steps.find((s) => s.dataset.step === 'scan');
+        scanStep.classList.remove('done');
+        scanStep.classList.add('error');
+        scanSubEl.textContent = 'incomplete: a scanner failed or timed out';
+      }
+      showScan(data.scan);
       phaseMessageEl.hidden = true;
       detailUrlRow.hidden = false;
       detailUrl.textContent = data.url;
@@ -117,8 +171,15 @@ async function poll() {
     // The status API returns a `phase`/`message` derived server-side
     // (elapsed-time heuristic — Workflows' status API has no per-step
     // detail), so we don't need to duplicate that guesswork here.
-    markStepsDoneUpTo(data.phase || 'checkout');
-    phaseMessageEl.textContent = data.message || 'Provisioning...';
+    if (data.steps) {
+      applySteps(data.steps);
+      phaseMessageEl.textContent = data.steps.scan === 'active'
+        ? 'Scanning repo with OSV-scanner...'
+        : data.message || 'Provisioning...';
+    } else {
+      markStepsDoneUpTo(data.phase || 'checkout');
+      phaseMessageEl.textContent = data.message || 'Provisioning...';
+    }
     pollTimer = setTimeout(poll, 2500);
   } catch (err) {
     pollTimer = setTimeout(poll, 3000);

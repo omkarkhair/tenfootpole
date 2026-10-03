@@ -210,7 +210,14 @@ async function handleProvisionStatus(
     // Workflows API, so approximate a human-readable phase from elapsed
     // time. This is a heuristic, not ground truth from the Workflow itself.
     const { phase, message } = describeProgress(instanceId);
-    return Response.json({ status: status.status, phase, message });
+    const progress = await registry(env).getProgress(instanceId).catch(() => null);
+    return Response.json({
+      status: status.status,
+      phase,
+      message,
+      // Real per-step state recorded by the workflow (absent until it starts).
+      steps: progress?.steps ?? null,
+    });
   } catch (error) {
     const message =
       error instanceof Error ? error.message : 'Instance not found';

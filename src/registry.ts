@@ -36,6 +36,12 @@ export type RegistryStatus = {
   sessionMinutes: number;
 };
 
+export type StepName = 'checkout' | 'scan' | 'server' | 'tunnel';
+export type StepState = 'active' | 'done' | 'error';
+export type Progress = { steps: Partial<Record<StepName, StepState>>; at: number };
+
+const PROGRESS_TTL_MS = 60 * 60_000;
+
 export function sessionMinutes(env: { SESSION_MAX_MINUTES?: string }): number {
   const n = Number(env.SESSION_MAX_MINUTES);
   return Number.isFinite(n) && n > 0 ? n : DEFAULT_SESSION_MINUTES;
@@ -111,6 +117,25 @@ export class Registry extends DurableObject<Env> {
     };
     await this.save(leases);
     return { expiresAt };
+  }
+
+  /** Record real provisioning progress for the status page. */
+  async setProgress(instanceId: string, step: StepName, state: StepState): Promise<void> {
+    const all = (await this.ctx.storage.get<Record<string, Progress>>('progress')) ?? {};
+    const now = Date.now();
+    for (const [id, p] of Object.entries(all)) {
+      if (now - p.at > PROGRESS_TTL_MS) delete all[id];
+    }
+    const cur = all[instanceId] ?? { steps: {}, at: now };
+    cur.steps[step] = state;
+    cur.at = now;
+    all[instanceId] = cur;
+    await this.ctx.storage.put('progress', all);
+  }
+
+  async getProgress(instanceId: string): Promise<Progress | null> {
+    const all = (await this.ctx.storage.get<Record<string, Progress>>('progress')) ?? {};
+    return all[instanceId] ?? null;
   }
 
   async release(sandboxId: string): Promise<void> {

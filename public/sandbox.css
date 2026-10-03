@@ -62,6 +62,35 @@
   content: '';
 }
 
+.step.error { color: var(--text); }
+.step.error .step-dot { border-color: #e5484d; background: #e5484d; animation: none; }
+
+.step-sub {
+  display: block;
+  margin-top: 2px;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.scan-result {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px 0;
+  border-top: 1px solid var(--border);
+  font-family: var(--font-mono);
+  font-size: 13px;
+}
+
+.scan-head, .scan-row { display: flex; justify-content: space-between; gap: 12px; }
+.scan-rows { display: flex; flex-direction: column; gap: 6px; color: var(--text-muted); }
+.scan-note { margin: 0; font-size: 12px; color: var(--text-muted); }
+
+.verdict { text-transform: uppercase; letter-spacing: 0.04em; font-size: 12px; }
+.verdict.clear { color: #3fb950; }
+.verdict.review, .verdict.suspicious { color: #d29922; }
+.verdict.malicious, .verdict.unknown { color: #e5484d; }
+
 .details {
   display: flex;
   flex-direction: column;
