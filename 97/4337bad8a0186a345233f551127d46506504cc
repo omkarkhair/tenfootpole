@@ -1,0 +1,29 @@
+public/sandbox.css
+  s_60ed6d53100bda::t_f6194367fc4fa1 65-93
+public/sandbox.html
+  s_60ed6d53100bda::t_526175805c8bbb 43-48,84-92
+public/sandbox.js
+  s_60ed6d53100bda::t_90cb5e7ecbe5ae 17-21,76-116,152-159,174-182
+src/index.ts
+  s_60ed6d53100bda::t_003c90758341e3 213-220
+src/provision-workflow.ts
+  s_60ed6d53100bda::t_3355415a48159d 5,20-26,30,70-71,81-83,115,162-163,178,201-205,210,264-265,273,280,312-313
+src/registry.ts
+  s_60ed6d53100bda::t_80bb199df12cb9 39-44,122-140
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "974337bad8a0186a345233f551127d46506504cc",
+  "prompts": {},
+  "sessions": {
+    "s_60ed6d53100bda": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_effe7d6a2ffe0SR2tlcAG9JfLe",
+        "model": "claude-sonnet-5-5"
+      },
+      "human_author": "Omkar Khair <omkarkhair@gmail.com>"
+    }
+  }
+}
