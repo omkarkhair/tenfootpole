@@ -1,0 +1,35 @@
+scripts/eval.mjs
+  s_60ed6d53100bda::t_20a087e44568be 1-54
+src/ai-proxy.ts
+  s_60ed6d53100bda::t_f991509e884e52 1-35
+src/eval.ts
+  s_60ed6d53100bda::t_dfa24ab927697d 1-56
+src/index.ts
+  s_60ed6d53100bda::t_908dac4c7ce75c 3,44-49
+src/provision-workflow.ts
+  s_60ed6d53100bda::t_49330aca51dd07 4,99-100
+src/sandbox.ts
+  s_60ed6d53100bda::t_65151f065ffd04 3,91-96
+worker-configuration.d.ts
+  s_60ed6d53100bda::t_bed104522d5910 2,5,7-8,29
+wrangler.jsonc
+  s_60ed6d53100bda::t_a0d36eeef2c5ff 51,53-56
+wrangler.public.jsonc
+  s_60ed6d53100bda::t_d168aa0584cddb 57,59-62
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "eb23e009c42db7915126eaf8aa10fba709c5dfb4",
+  "prompts": {},
+  "sessions": {
+    "s_60ed6d53100bda": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_effe7d6a2ffe0SR2tlcAG9JfLe",
+        "model": "claude-sonnet-5-5"
+      },
+      "human_author": "Omkar Khair <omkarkhair@gmail.com>"
+    }
+  }
+}
