@@ -1,0 +1,10 @@
+{
+  "providers": {
+    "tenfootpole": {
+      "baseUrl": "http://ai.tenfootpole.internal/v1",
+      "api": "openai-completions",
+      "apiKey": "unused",
+      "models": [{ "id": "default" }]
+    }
+  }
+}

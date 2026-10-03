@@ -96,8 +96,6 @@ export class ProvisionWorkflow extends WorkflowEntrypoint<Env, ProvisionParams> 
           attempt: ctx.attempt,
         });
         const sandbox = getSandbox(this.env.Sandbox, sandboxId, SANDBOX_OPTIONS);
-        // Route the in-sandbox agent's inference calls through the Worker.
-        await sandbox.setOutboundByHost(AI_HOST, 'workersAi');
 
         const projectExists = await sandbox.exists('/workspace/project');
         log(instanceId, 'checkout repo', 'exists check', {
@@ -158,6 +156,10 @@ export class ProvisionWorkflow extends WorkflowEntrypoint<Env, ProvisionParams> 
         const sandbox = getSandbox(this.env.Sandbox, sandboxId, SANDBOX_OPTIONS);
 
         // `command` is now argv (string[]), not a joined string.
+        // Route the in-sandbox agent's inference calls through the Worker.
+        // Done once the container is up (after the clone), for its lifetime.
+        await sandbox.setOutboundByHost(AI_HOST, 'workersAi');
+
         const processes = await sandbox.listProcesses();
         const existing = processes.find(
           (p) =>
