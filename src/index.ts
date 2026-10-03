@@ -1,5 +1,6 @@
 import { proxyToSandbox } from '@cloudflare/sandbox';
 import type { ProvisionOutput, ProvisionParams } from './provision-workflow';
+import { runEval } from './eval';
 import { maxContainers, sessionMinutes, type Registry } from './registry';
 
 export { Sandbox, ContainerProxy } from './sandbox';
@@ -39,6 +40,12 @@ export default {
     if (proxyResponse) return proxyResponse;
 
     const url = new URL(request.url);
+
+    // M0 spike: local dev only.
+    if (url.pathname === '/api/_eval' && url.hostname === 'localhost') {
+      const model = url.searchParams.get('model') ?? env.AI_MODEL;
+      return Response.json(await runEval(env, model).catch((e) => ({ model, error: String(e) })));
+    }
 
     if (url.pathname === '/api/config' && request.method === 'GET') {
       const status = await registry(env).status();

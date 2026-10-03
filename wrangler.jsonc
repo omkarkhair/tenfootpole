@@ -48,7 +48,12 @@
       "tag": "v2"
     }
   ],
+  "ai": { "binding": "AI" },
   "vars": {
+    // AI agent (Pi) inference. Any Workers AI id, third-party "author/model",
+    // or "dynamic/<route>". Gateway "default" is auto-created.
+    "AI_MODEL": "@cf/zai-org/glm-5.3-flash",
+    "AI_GATEWAY_ID": "default",
     // Max sandboxes alive at once. 0 = unlimited (self-hosted default).
     "MAX_CONTAINERS": "0",
     // Hard session length; the sandbox is destroyed when it elapses.

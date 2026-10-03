@@ -1,6 +1,7 @@
 import { WorkflowEntrypoint, type WorkflowStep } from 'cloudflare:workers';
 import type { WorkflowEvent } from 'cloudflare:workers';
 import { getSandbox } from '@cloudflare/sandbox';
+import { AI_HOST } from './ai-proxy';
 import { sessionMinutes, type Registry } from './registry';
 
 export type ProvisionParams = {
@@ -95,6 +96,8 @@ export class ProvisionWorkflow extends WorkflowEntrypoint<Env, ProvisionParams> 
           attempt: ctx.attempt,
         });
         const sandbox = getSandbox(this.env.Sandbox, sandboxId, SANDBOX_OPTIONS);
+        // Route the in-sandbox agent's inference calls through the Worker.
+        await sandbox.setOutboundByHost(AI_HOST, 'workersAi');
 
         const projectExists = await sandbox.exists('/workspace/project');
         log(instanceId, 'checkout repo', 'exists check', {

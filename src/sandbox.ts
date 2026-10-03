@@ -1,5 +1,6 @@
 import { Sandbox as BaseSandbox, ContainerProxy } from '@cloudflare/sandbox';
 import type { OutboundHandlerContext } from '@cloudflare/containers';
+import { handleAiRequest } from './ai-proxy';
 
 export { ContainerProxy };
 
@@ -87,6 +88,12 @@ Sandbox.outboundHandlers = {
     _env: Cloudflare.Env,
     ctx: OutboundHandlerContext,
   ) => forward('git clone', request, ctx),
+  // Pi -> Workers AI. Registered per sandbox for its whole life.
+  workersAi: (
+    request: Request,
+    env: Cloudflare.Env,
+    ctx: OutboundHandlerContext,
+  ) => handleAiRequest(request, env, ctx.containerId ?? 'unknown'),
 };
 
 async function forward(
