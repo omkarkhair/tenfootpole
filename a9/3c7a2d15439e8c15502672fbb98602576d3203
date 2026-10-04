@@ -1,0 +1,45 @@
+Dockerfile
+  s_60ed6d53100bda::t_85fcc037420b60 31,33
+image/agent.sh
+  s_60ed6d53100bda::t_7445dd554c532f 1-8
+image/banner.sh
+  s_60ed6d53100bda::t_6eb18ef60dbd72 2-4,11,13,15-18
+image/pi/AGENTS.md
+  s_60ed6d53100bda::t_9ada2051ac3fb1 20-23
+public/sandbox.css
+  s_60ed6d53100bda::t_771a63541971d0 194-263
+public/sandbox.html
+  s_60ed6d53100bda::t_8984b6016c3901 13,114-159
+public/sandbox.js
+  s_60ed6d53100bda::t_b421da2f3e832c 160-164
+public/terminal.js
+  s_60ed6d53100bda::t_7901cdfaa93016 1-106
+public/vendor/addon-fit.mjs
+  s_60ed6d53100bda::t_8601a5c6e0ac6c 1-17
+public/vendor/sandbox-addon.mjs
+  s_60ed6d53100bda::t_569c640c898a64 1-219
+public/vendor/xterm.css
+  s_60ed6d53100bda::t_cc96d44169e6b2 1-285
+public/vendor/xterm.mjs
+  s_60ed6d53100bda::t_fa2d2cc2cc86c8 1-52
+src/index.ts
+  s_60ed6d53100bda::t_17003ff4816b3e 1-2,72-76,211-212,251-298
+src/provision-workflow.ts
+  s_60ed6d53100bda::t_5d265a46bfff13 18-23,46,281-300,347
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "a93c7a2d15439e8c15502672fbb98602576d3203",
+  "prompts": {},
+  "sessions": {
+    "s_60ed6d53100bda": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_effe7d6a2ffe0SR2tlcAG9JfLe",
+        "model": "claude-sonnet-5-5"
+      },
+      "human_author": "Omkar Khair <omkarkhair@gmail.com>"
+    }
+  }
+}
