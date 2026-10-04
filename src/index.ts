@@ -1,5 +1,5 @@
-import { proxyToSandbox } from '@cloudflare/sandbox';
-import type { ProvisionOutput, ProvisionParams } from './provision-workflow';
+import { getSandbox, proxyToSandbox } from '@cloudflare/sandbox';
+import { sandboxOptions, type ProvisionOutput, type ProvisionParams } from './provision-workflow';
 import { runEval } from './eval';
 import { maxContainers, sessionMinutes, type Registry } from './registry';
 
@@ -67,6 +67,11 @@ export default {
     const statusMatch = url.pathname.match(/^\/api\/provision\/([^/]+)$/);
     if (statusMatch && request.method === 'GET') {
       return handleProvisionStatus(statusMatch[1], env);
+    }
+
+    const termMatch = url.pathname.match(/^\/api\/sandbox\/([^/]+)\/terminal$/);
+    if (termMatch && request.method === 'GET') {
+      return handleTerminal(request, env, termMatch[1]);
     }
 
     // Dedicated status page: /sandbox/<instanceId>. Serve the same static
@@ -203,6 +208,8 @@ async function handleProvisionStatus(
         url: output.url,
         expiresAt: output.expiresAt,
         scan: output.scan,
+        // sandboxId / terminalId stay server-side.
+        terminal: Boolean(output.terminalId),
       });
     }
 
@@ -240,4 +247,52 @@ function describeProgress(instanceId: string): { phase: string; message: string 
     return { phase: 'server', message: 'Starting code-server...' };
   }
   return { phase: 'tunnel', message: 'Exposing tunnel...' };
+}
+
+// WebSocket bridge to the sandbox shell. The unguessable instance id (122
+// random bits, only ever shown to the user who provisioned it) is the
+// capability, like the IDE preview URL. The sandbox and terminal ids are looked
+// up here and never sent to the client.
+async function handleTerminal(
+  request: Request,
+  env: Env,
+  instanceId: string,
+): Promise<Response> {
+  if (request.headers.get('upgrade')?.toLowerCase() !== 'websocket') {
+    return Response.json({ error: 'Expected a WebSocket upgrade' }, { status: 426 });
+  }
+  // Same-origin only: a page on another site must not be able to open the shell.
+  const origin = request.headers.get('origin');
+  if (origin && new URL(origin).host !== new URL(request.url).host) {
+    log('GET /api/sandbox/:id/terminal', 'bad origin', { origin });
+    return Response.json({ error: 'Forbidden' }, { status: 403 });
+  }
+  if (!/^prov-[0-9a-z]+-[0-9a-f-]{36}$/.test(instanceId)) {
+    return Response.json({ error: 'Not found' }, { status: 404 });
+  }
+
+  let output: ProvisionOutput;
+  try {
+    const status = await (await env.PROVISION_WORKFLOW.get(instanceId)).status();
+    if (status.status !== 'complete') {
+      return Response.json({ error: 'Sandbox is not ready' }, { status: 409 });
+    }
+    output = status.output as ProvisionOutput;
+  } catch {
+    return Response.json({ error: 'Not found' }, { status: 404 });
+  }
+  if (Date.now() >= output.expiresAt) {
+    return Response.json({ error: 'Session expired' }, { status: 410 });
+  }
+
+  const sandbox = getSandbox(env.Sandbox, output.sandboxId, sandboxOptions(env));
+  const terminal = await sandbox.getTerminal(output.terminalId).catch(() => null);
+  if (!terminal) {
+    return Response.json({ error: 'Terminal not available' }, { status: 410 });
+  }
+  const u = new URL(request.url);
+  const cols = Number(u.searchParams.get('cols')) || undefined;
+  const rows = Number(u.searchParams.get('rows')) || undefined;
+  log('GET /api/sandbox/:id/terminal', 'connect', { instanceId });
+  return terminal.connect(request, { cols, rows });
 }

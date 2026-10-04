@@ -191,3 +191,73 @@
 .banner-compact {
   background: transparent;
 }
+
+/* ---- Workspace: sidebar + full-screen terminal ---- */
+body.workspace-mode { overflow: hidden; }
+body.workspace-mode .banner,
+body.workspace-mode main,
+body.workspace-mode .bg-grid { display: none; }
+
+.workspace {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  background: var(--bg-page);
+  z-index: 10;
+}
+
+.side {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 20px 18px;
+  overflow-y: auto;
+  border-right: 1px solid var(--border);
+  background: var(--bg-card);
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
+
+.side-brand { font-size: 15px; color: var(--text); }
+.side-brand span { color: var(--text-muted); font-size: 11px; margin-left: 6px; }
+.side-block { display: flex; flex-direction: column; gap: 6px; }
+.side-label { color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em; font-size: 10px; display: flex; justify-content: space-between; }
+.side-value { color: var(--text); word-break: break-all; }
+.side-value.big { font-size: 20px; }
+.side-ide { align-self: flex-start; }
+
+.actions { display: flex; flex-direction: column; gap: 6px; }
+.actions button {
+  text-align: left;
+  padding: 8px 10px;
+  border: 1px solid var(--border-strong);
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  cursor: pointer;
+  transition: background 150ms var(--ease);
+}
+.actions button:hover { background: var(--bg-hover); }
+
+.side-foot { margin-top: auto; display: flex; align-items: center; gap: 8px; color: var(--text-muted); }
+.conn-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--border-strong); }
+.conn-dot[data-state="connected"] { background: #3fb950; }
+.conn-dot[data-state="connecting"] { background: #d29922; }
+.conn-dot[data-state="disconnected"] { background: #e5484d; }
+
+.term-pane { position: relative; min-width: 0; min-height: 0; background: #121212; }
+.term { position: absolute; inset: 0; padding: 10px 0 0 12px; }
+.term .xterm { height: 100%; }
+.term-overlay {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(18, 18, 18, 0.88);
+  color: var(--text); font-family: var(--font-mono); text-align: center;
+}
+.term-overlay a { color: var(--orange); }
+
+@media (max-width: 760px) {
+  .workspace { grid-template-columns: 1fr; grid-template-rows: auto 1fr; }
+  .side { max-height: 40vh; border-right: 0; border-bottom: 1px solid var(--border); }
+}

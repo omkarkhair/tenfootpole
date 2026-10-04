@@ -28,8 +28,8 @@ COPY --from=osv /db /opt/tfp/osv-db
 ENV OSV_SCANNER_LOCAL_DB_CACHE_DIRECTORY=/opt/tfp/osv-db
 
 # Auto-exec surface check, banner and Pi config.
-COPY image/autoexec.mjs image/scan.mjs image/banner.sh /opt/tfp/
+COPY image/autoexec.mjs image/scan.mjs image/banner.sh image/agent.sh /opt/tfp/
 COPY image/pi/ /root/.pi/agent/
-RUN chmod +x /opt/tfp/banner.sh
+RUN chmod +x /opt/tfp/banner.sh /opt/tfp/agent.sh
 
 EXPOSE 8080

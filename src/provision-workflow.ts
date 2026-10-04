@@ -15,6 +15,12 @@ export type ProvisionOutput = {
   /** Epoch ms at which the sandbox is destroyed. */
   expiresAt: number;
   scan: ScanSummary;
+  /**
+   * Server-side only: the status endpoint must not expose these. The terminal
+   * route looks them up from the workflow output after checking the instance id.
+   */
+  sandboxId: string;
+  terminalId: string;
 };
 
 export type ScannerResult = {
@@ -37,7 +43,7 @@ export type ScanSummary = {
 // The Registry Durable Object enforces the hard session limit by destroying
 // the sandbox when its lease expires. `sleepAfter` is only a backstop (in case
 // that destroy fails), so it is set slightly past the session length.
-function sandboxOptions(env: Env) {
+export function sandboxOptions(env: Env) {
   return {
     normalizeId: true,
     sleepAfter: `${sessionMinutes(env) + 2}m`,
@@ -272,6 +278,26 @@ export class ProvisionWorkflow extends WorkflowEntrypoint<Env, ProvisionParams> 
 
     const [scan] = await Promise.all([scanDone, codeServerPromise]);
 
+    // Interactive shell for the user (and Pi). Starts in the repo and prints
+    // the banner; Pi is not auto-started.
+    const terminalId = await step.do(
+      'create terminal',
+      { retries: { limit: 3, delay: '3 seconds', backoff: 'exponential' } },
+      async () => {
+        const sandbox = getSandbox(this.env.Sandbox, sandboxId, SANDBOX_OPTIONS);
+        const existing = (await sandbox.listTerminals())[0];
+        if (existing) return existing.id;
+        const created = await sandbox.createTerminal({
+          command: ['bash', '-c', '/opt/tfp/banner.sh; exec bash -l'],
+          cwd: '/workspace/project',
+          cols: 100,
+          rows: 30,
+        });
+        log(instanceId, 'create terminal', 'created', { sandboxId, terminalId: created.id });
+        return created.id;
+      },
+    );
+
     const url = await step
       .do(
         'expose ide',
@@ -318,6 +344,6 @@ export class ProvisionWorkflow extends WorkflowEntrypoint<Env, ProvisionParams> 
 
     log(instanceId, 'run', 'complete', { sandboxId, url, expiresAt, scan });
 
-    return { url, expiresAt, scan };
+    return { url, expiresAt, scan, sandboxId, terminalId };
   }
 }

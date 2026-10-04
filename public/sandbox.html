@@ -10,6 +10,7 @@
   <link rel="stylesheet" href="/style.css" />
   <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
   <link rel="stylesheet" href="/sandbox.css" />
+  <link rel="stylesheet" href="/vendor/xterm.css" />
 </head>
 <body>
   <div class="bg-grid"></div>
@@ -110,6 +111,51 @@
     </footer>
   </main>
 
-  <script src="/sandbox.js"></script>
+  <div class="workspace" id="workspace" hidden>
+    <aside class="side">
+      <div class="side-brand">十尺棒 <span>Ten Foot Pole</span></div>
+
+      <section class="side-block">
+        <div class="side-label">Repository</div>
+        <div class="side-value" id="ws-repo">&mdash;</div>
+      </section>
+
+      <section class="side-block">
+        <div class="side-label">Session ends in</div>
+        <div class="side-value big" id="ws-timer">&mdash;</div>
+      </section>
+
+      <a id="ws-ide" class="open-btn side-ide" href="#" target="_blank" rel="noopener noreferrer">
+        <span>Open IDE</span>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7"/><path d="M7 7h10v10"/></svg>
+      </a>
+
+      <section class="side-block">
+        <div class="side-label">Security scan <span class="verdict" id="ws-verdict"></span></div>
+        <div class="scan-rows" id="ws-scan-rows"></div>
+        <p class="scan-note" id="ws-scan-note" hidden></p>
+      </section>
+
+      <section class="side-block">
+        <div class="side-label">Quick actions</div>
+        <div class="actions">
+          <button type="button" data-cmd="/opt/tfp/agent.sh">Restart the agent (pi)</button>
+          <button type="button" data-cmd="cat /workspace/.tfp/findings.json | less">View scan findings</button>
+          <button type="button" data-cmd="ls -la">List files</button>
+        </div>
+      </section>
+
+      <div class="side-foot">
+        <span class="conn-dot" id="ws-conn-dot"></span><span id="ws-conn">connecting</span>
+      </div>
+    </aside>
+
+    <section class="term-pane">
+      <div class="term" id="term"></div>
+      <div class="term-overlay" id="term-overlay" hidden></div>
+    </section>
+  </div>
+
+  <script type="module" src="/sandbox.js"></script>
 </body>
 </html>

@@ -157,6 +157,11 @@ async function poll() {
         scanSubEl.textContent = 'incomplete: a scanner failed or timed out';
       }
       showScan(data.scan);
+      if (data.terminal) {
+        import('/terminal.js')
+          .then((m) => m.enterWorkspace({ instanceId, repo, data }))
+          .catch((e) => console.error('terminal failed to load', e));
+      }
       phaseMessageEl.hidden = true;
       detailUrlRow.hidden = false;
       detailUrl.textContent = data.url;
