@@ -1,0 +1,19 @@
+src/provision-workflow.ts
+  s_60ed6d53100bda::t_610250323c6738 253-261,264
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "e5e9fba1196d7966de10492eb5bca72a50c09b49",
+  "prompts": {},
+  "sessions": {
+    "s_60ed6d53100bda": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_effe7d6a2ffe0SR2tlcAG9JfLe",
+        "model": "claude-sonnet-5-5"
+      },
+      "human_author": "Omkar Khair <omkarkhair@gmail.com>"
+    }
+  }
+}
