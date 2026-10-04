@@ -250,8 +250,18 @@ export class ProvisionWorkflow extends WorkflowEntrypoint<Env, ProvisionParams> 
           });
         } else {
           log(instanceId, 'start code-server', 'launching', { sandboxId });
+          // Local dev serves previews on `localhost:<port>`. The SDK forwards
+          // the host without the port while the browser's Origin has it, so
+          // code-server's origin check rejects the IDE WebSocket (403). Trust
+          // only this exact preview domain; real domains have no port and
+          // keep the strict check.
+          const previewHost = this.env.PREVIEW_HOSTNAME;
+          const trustOrigins = /:\d+$/.test(previewHost)
+            ? ['--trusted-origins', `*.${previewHost}`]
+            : [];
           const launched = await sandbox.exec([
             'code-server',
+            ...trustOrigins,
             '--bind-addr',
             '0.0.0.0:8080',
             '--auth',
