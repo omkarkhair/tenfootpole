@@ -1,0 +1,41 @@
+Dockerfile
+  s_60ed6d53100bda::t_b129eb1a78c5d5 22-30
+image/pi/settings.json
+  s_60ed6d53100bda::t_9b89c60f3a005b 1
+public/sandbox.css
+  s_60ed6d53100bda::t_a2a0d5b11bf520 249-258,273-301
+public/sandbox.html
+  s_60ed6d53100bda::t_6a950bc3e1cccf 153-185
+public/terminal.js
+  s_60ed6d53100bda::t_7ebaba402e462d 76-79,92-94,113-219
+src/ai-proxy.ts
+  s_60ed6d53100bda::t_f7691658ab03f7 6-8,12-24
+src/egress-log.ts
+  s_60ed6d53100bda::t_39a9c513f5b628 1-87
+src/index.ts
+  s_60ed6d53100bda::t_fbb6c0f6dd3298 3,10,79-83,306-340
+src/sandbox.ts
+  s_60ed6d53100bda::t_a56c0a097e676b 4,41,47-48,50-66,93,96,107,109,115,122,127,130,133,136
+worker-configuration.d.ts
+  s_60ed6d53100bda::t_75cb30ba9d95df 2,16,22
+wrangler.jsonc
+  s_60ed6d53100bda::t_c3e6e273d5d6e8 33-36,55-58
+wrangler.public.jsonc
+  s_60ed6d53100bda::t_2f14682e48a9cb 39-42,61-64
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "fb91768add70ef963b3d4e00cb74e64f647b6c9a",
+  "prompts": {},
+  "sessions": {
+    "s_60ed6d53100bda": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_effe7d6a2ffe0SR2tlcAG9JfLe",
+        "model": "claude-sonnet-5-5"
+      },
+      "human_author": "Omkar Khair <omkarkhair@gmail.com>"
+    }
+  }
+}
