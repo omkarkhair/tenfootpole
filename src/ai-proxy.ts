@@ -3,9 +3,25 @@
 // outbound handler (src/sandbox.ts) lands here, so no credential ever enters
 // the container.
 
+import type { OutboundHandlerContext } from '@cloudflare/containers';
+import { logAttempt } from './sandbox';
+
 export const AI_HOST = 'ai.tenfootpole.internal';
 
 export async function handleAiRequest(
+  request: Request,
+  env: Env,
+  ctx: OutboundHandlerContext,
+  modelOverride?: string,
+): Promise<Response> {
+  const sandboxId = ctx.containerId ?? 'unknown';
+  const start = Date.now();
+  const response = await run(request, env, sandboxId, modelOverride);
+  await logAttempt('allowed', 'ai inference', request, ctx, { status: response.status, durationMs: Date.now() - start }, env);
+  return response;
+}
+
+async function run(
   request: Request,
   env: Env,
   sandboxId: string,

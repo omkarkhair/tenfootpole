@@ -73,7 +73,10 @@ export function enterWorkspace({ instanceId, repo, data }) {
   let raf = 0;
   const refit = () => {
     cancelAnimationFrame(raf);
-    raf = requestAnimationFrame(() => { try { fit.fit(); } catch {} });
+    raf = requestAnimationFrame(() => {
+      // A hidden tab has no size; fitting then would collapse the terminal.
+      if ($('term').clientWidth > 0) { try { fit.fit(); } catch {} }
+    });
   };
   new ResizeObserver(refit).observe($('term'));
   window.addEventListener('resize', refit);
@@ -85,6 +88,9 @@ export function enterWorkspace({ instanceId, repo, data }) {
       term.focus();
     }),
   );
+
+  setupTabs(refit, () => { term.focus(); });
+  startNetworkWatch(instanceId, () => data.expiresAt);
 
   // Session clock
   const overlay = $('term-overlay');
@@ -103,4 +109,111 @@ export function enterWorkspace({ instanceId, repo, data }) {
   };
   const timer = setInterval(tick, 1000);
   tick();
+}
+
+function setupTabs(onTerminalShown, focusTerminal) {
+  const tabs = document.querySelectorAll('.tab');
+  const panes = { terminal: $('pane-terminal'), network: $('pane-network') };
+  tabs.forEach((tab) =>
+    tab.addEventListener('click', () => {
+      const name = tab.dataset.tab;
+      tabs.forEach((t) => {
+        const on = t === tab;
+        t.classList.toggle('active', on);
+        t.setAttribute('aria-selected', String(on));
+      });
+      for (const [k, el] of Object.entries(panes)) el.hidden = k !== name;
+      if (name === 'terminal') { onTerminalShown(); focusTerminal(); }
+      else { netSeen = netTotalBlocked; renderBadge(); }
+    }),
+  );
+}
+
+// ---- Network watch ---------------------------------------------------------
+let netSeen = 0;
+let netTotalBlocked = 0;
+
+function renderBadge() {
+  const badge = $('net-badge');
+  const unseen = netTotalBlocked - netSeen;
+  badge.hidden = unseen <= 0;
+  badge.textContent = String(unseen);
+}
+
+function fmtTime(ms) {
+  return new Date(ms).toLocaleTimeString([], { hour12: false });
+}
+
+function addRow(e) {
+  const tr = document.createElement('tr');
+  tr.className = e.decision;
+  const cells = [
+    fmtTime(e.at),
+    e.decision === 'blocked' ? 'BLOCKED' : 'allowed',
+    e.method,
+    `${e.scheme}://${e.host}${e.port ? ':' + e.port : ''}${e.path}`,
+    e.status ? String(e.status) : e.error ? 'error' : '',
+    e.reason,
+  ];
+  cells.forEach((text, i) => {
+    const td = document.createElement('td');
+    td.textContent = text; // textContent: hosts and paths are attacker-controlled
+    if (i === 3) td.className = 'net-url';
+    if (i === 3) td.title = text;
+    tr.appendChild(td);
+  });
+  return tr;
+}
+
+function startNetworkWatch(instanceId, getExpiry) {
+  let since = 0;
+  let timer = 0;
+  const rows = $('net-rows');
+  const poll = async () => {
+    let next = 2500;
+    try {
+      const res = await fetch(`/api/sandbox/${encodeURIComponent(instanceId)}/egress?since=${since}`, { cache: 'no-store' });
+      if (res.ok) {
+        const d = await res.json();
+        since = d.lastSeq;
+        for (const e of d.events) rows.prepend(addRow(e));
+        while (rows.children.length > 300) rows.lastChild.remove();
+        $('net-empty').hidden = rows.children.length > 0;
+        $('net-total').textContent = d.counts.total;
+        $('net-allowed').textContent = d.counts.allowed;
+        $('net-blocked').textContent = d.counts.blocked;
+        $('net-dropped').textContent = d.dropped ? `(${d.dropped} older not shown)` : '';
+        netTotalBlocked = d.counts.blocked;
+        if (!$('pane-network').hidden) netSeen = netTotalBlocked;
+        renderBadge();
+        $('net-mode').textContent = d.mode === 'open'
+          ? 'Egress is OPEN: requests are forwarded to the internet and logged here.'
+          : 'Egress is DENIED: only the repo host (during clone) and the AI proxy are allowed. Everything else is blocked.';
+        const hosts = $('net-hosts');
+        hosts.textContent = '';
+        if (!d.hosts.length) {
+          const p = document.createElement('p');
+          p.className = 'net-empty';
+          p.textContent = 'Nothing yet.';
+          hosts.appendChild(p);
+        }
+        for (const h of d.hosts) {
+          const row = document.createElement('div');
+          row.className = 'net-host' + (h.blocked ? ' has-blocked' : '');
+          const name = document.createElement('span');
+          name.textContent = h.host;
+          const n = document.createElement('span');
+          n.textContent = [h.allowed && `${h.allowed} ok`, h.blocked && `${h.blocked} blocked`].filter(Boolean).join(' · ');
+          row.append(name, n);
+          hosts.appendChild(row);
+        }
+        if (d.expired) return; // session over: stop polling
+      } else if (res.status === 404 || res.status === 409) {
+        next = 5000;
+      }
+    } catch { next = 5000; }
+    if (Date.now() < getExpiry() + 5000) timer = setTimeout(poll, next);
+  };
+  poll();
+  return () => clearTimeout(timer);
 }

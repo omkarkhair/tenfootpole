@@ -246,7 +246,16 @@ body.workspace-mode .bg-grid { display: none; }
 .conn-dot[data-state="connecting"] { background: #d29922; }
 .conn-dot[data-state="disconnected"] { background: #e5484d; }
 
-.term-pane { position: relative; min-width: 0; min-height: 0; background: #121212; }
+.main-pane { position: relative; display: flex; flex-direction: column; min-width: 0; min-height: 0; background: #121212; }
+.tabs { flex: none; display: flex; gap: 2px; padding: 0 12px; border-bottom: 1px solid var(--border); background: var(--bg-card); }
+.tab {
+  padding: 11px 16px; border: 0; border-bottom: 2px solid transparent; background: transparent;
+  color: var(--text-muted); font-family: var(--font-mono); font-size: 12px; cursor: pointer;
+}
+.tab:hover { color: var(--text); }
+.tab.active { color: var(--text); border-bottom-color: var(--orange); }
+.tab-badge { display: inline-block; min-width: 18px; padding: 0 5px; margin-left: 6px; border-radius: 9px; background: #e5484d; color: #fff; font-size: 10px; text-align: center; }
+.term-pane { position: relative; flex: 1; min-width: 0; min-height: 0; background: #121212; }
 .term { position: absolute; inset: 0; padding: 10px 0 0 12px; }
 .term .xterm { height: 100%; }
 .term-overlay {
@@ -260,4 +269,33 @@ body.workspace-mode .bg-grid { display: none; }
 @media (max-width: 760px) {
   .workspace { grid-template-columns: 1fr; grid-template-rows: auto 1fr; }
   .side { max-height: 40vh; border-right: 0; border-bottom: 1px solid var(--border); }
+}
+
+/* ---- Network watch ---- */
+.net-pane { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 14px; padding: 16px 18px; overflow: hidden; font-family: var(--font-mono); font-size: 12px; color: var(--text); }
+.net-summary { display: flex; align-items: flex-end; gap: 28px; flex-wrap: wrap; }
+.net-stat { display: flex; flex-direction: column; }
+.net-stat span { font-size: 24px; }
+.net-stat label { color: var(--text-muted); font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; }
+.net-stat.ok span { color: #3fb950; }
+.net-stat.bad span { color: #e5484d; }
+.net-mode { margin-left: auto; max-width: 420px; color: var(--text-muted); font-size: 11px; }
+.net-body { flex: 1; min-height: 0; display: grid; grid-template-columns: 240px 1fr; gap: 18px; }
+.net-hosts, .net-events { display: flex; flex-direction: column; gap: 8px; min-height: 0; }
+.net-hosts > div:last-child { overflow-y: auto; display: flex; flex-direction: column; gap: 4px; }
+.net-host { display: flex; justify-content: space-between; gap: 10px; padding: 6px 8px; border: 1px solid var(--border); }
+.net-host span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.net-host span:last-child { color: var(--text-muted); flex: none; }
+.net-host.has-blocked { border-color: #e5484d; }
+.net-host.has-blocked span:last-child { color: #e5484d; }
+.net-table-wrap { flex: 1; min-height: 0; overflow: auto; border: 1px solid var(--border); }
+.net-table { width: 100%; border-collapse: collapse; }
+.net-table td { padding: 5px 10px; white-space: nowrap; border-bottom: 1px solid var(--border); }
+.net-table tr.blocked td { color: #e5484d; }
+.net-table td.net-url { max-width: 340px; overflow: hidden; text-overflow: ellipsis; }
+.net-empty { color: var(--text-muted); font-size: 11px; }
+.net-foot { color: var(--text-muted); font-size: 11px; }
+
+@media (max-width: 760px) {
+  .net-body { grid-template-columns: 1fr; }
 }

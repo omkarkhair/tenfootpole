@@ -1,11 +1,13 @@
 import { getSandbox, proxyToSandbox } from '@cloudflare/sandbox';
 import { sandboxOptions, type ProvisionOutput, type ProvisionParams } from './provision-workflow';
+import { egressLogStub } from './egress-log';
 import { runEval } from './eval';
 import { maxContainers, sessionMinutes, type Registry } from './registry';
 
 export { Sandbox, ContainerProxy } from './sandbox';
 export { ProvisionWorkflow } from './provision-workflow';
 export { Registry } from './registry';
+export { EgressLog, egressLogStub } from './egress-log';
 
 // Sandboxes have no SSH egress (only HTTP(S) can be intercepted), so only
 // HTTPS git endpoints are accepted.
@@ -72,6 +74,11 @@ export default {
     const termMatch = url.pathname.match(/^\/api\/sandbox\/([^/]+)\/terminal$/);
     if (termMatch && request.method === 'GET') {
       return handleTerminal(request, env, termMatch[1]);
+    }
+
+    const egressMatch = url.pathname.match(/^\/api\/sandbox\/([^/]+)\/egress$/);
+    if (egressMatch && request.method === 'GET') {
+      return handleEgress(request, env, egressMatch[1]);
     }
 
     // Dedicated status page: /sandbox/<instanceId>. Serve the same static
@@ -295,4 +302,39 @@ async function handleTerminal(
   const rows = Number(u.searchParams.get('rows')) || undefined;
   log('GET /api/sandbox/:id/terminal', 'connect', { instanceId });
   return terminal.connect(request, { cols, rows });
+}
+
+// Network watch feed. Same capability model as the terminal: the unguessable
+// instance id is the credential, and the sandbox/container ids stay server-side.
+async function handleEgress(
+  request: Request,
+  env: Env,
+  instanceId: string,
+): Promise<Response> {
+  if (!/^prov-[0-9a-z]+-[0-9a-f-]{36}$/.test(instanceId)) {
+    return Response.json({ error: 'Not found' }, { status: 404 });
+  }
+  let output: ProvisionOutput;
+  try {
+    const status = await (await env.PROVISION_WORKFLOW.get(instanceId)).status();
+    if (status.status !== 'complete') {
+      return Response.json({ error: 'Sandbox is not ready' }, { status: 409 });
+    }
+    output = status.output as ProvisionOutput;
+  } catch {
+    return Response.json({ error: 'Not found' }, { status: 404 });
+  }
+  // The outbound handler names logs by container id, which is the Sandbox
+  // Durable Object's id.
+  const containerId = env.Sandbox.idFromName(output.sandboxId).toString();
+  const since = Number(new URL(request.url).searchParams.get('since')) || 0;
+  const snapshot = await egressLogStub(env, containerId).read(since);
+  return Response.json(
+    {
+      ...snapshot,
+      mode: env.EGRESS_MODE === 'open' ? 'open' : 'deny',
+      expired: Date.now() >= output.expiresAt,
+    },
+    { headers: { 'cache-control': 'no-store' } },
+  );
 }

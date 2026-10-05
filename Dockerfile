@@ -19,7 +19,15 @@ FROM docker.io/cloudflare/sandbox:0.13.0-next.738.2
 
 RUN wget --no-check-certificate -qO- https://github.com/coder/code-server/releases/download/v4.131.0/code-server-4.131.0-linux-amd64.tar.gz | tar -xz -C /usr/local --strip-components=1
 
-# Pi coding agent (pinned).
+# ripgrep + fd: Pi's grep/find tools. Without them Pi tries to download them
+# from GitHub at every start.
+RUN apt-get update && apt-get install -y --no-install-recommends ripgrep fd-find \
+ && ln -s "$(command -v fdfind)" /usr/local/bin/fd \
+ && rm -rf /var/lib/apt/lists/*
+
+# Pi coding agent (pinned). PI_OFFLINE stops its startup network calls (update
+# check, install report); inference goes through the Worker proxy only.
+ENV PI_OFFLINE=1
 RUN npm install -g @earendil-works/pi-coding-agent@1.0.0 && npm cache clean --force
 
 # Scanner: OSV-scanner + offline malicious-package DB.

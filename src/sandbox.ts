@@ -1,6 +1,7 @@
 import { Sandbox as BaseSandbox, ContainerProxy } from '@cloudflare/sandbox';
 import type { OutboundHandlerContext } from '@cloudflare/containers';
 import { handleAiRequest } from './ai-proxy';
+import { egressLogStub } from './egress-log';
 
 export { ContainerProxy };
 
@@ -37,14 +38,32 @@ export class Sandbox extends BaseSandbox {
 
 type Decision = 'allowed' | 'blocked';
 
-function logAttempt(
+export async function logAttempt(
   decision: Decision,
   reason: string,
   request: Request,
   ctx: OutboundHandlerContext,
   extra?: Record<string, unknown>,
-) {
+  env?: Cloudflare.Env,
+): Promise<void> {
   const url = new URL(request.url);
+  if (env) {
+    // Feeds the "Network watch" tab. Monitoring must never break traffic.
+    await egressLogStub(env as Env, ctx.containerId)
+      .record({
+        decision,
+        reason,
+        method: request.method,
+        scheme: url.protocol.replace(':', ''),
+        host: url.hostname,
+        port: url.port || undefined,
+        path: url.pathname,
+        status: typeof extra?.status === 'number' ? extra.status : undefined,
+        durationMs: typeof extra?.durationMs === 'number' ? extra.durationMs : undefined,
+        error: typeof extra?.error === 'string' ? extra.error.slice(0, 200) : undefined,
+      })
+      .catch(() => {});
+  }
   console.log(
     JSON.stringify({
       source: 'outbound',
@@ -71,10 +90,10 @@ Sandbox.outbound = async (
   ctx: OutboundHandlerContext,
 ): Promise<Response> => {
   if (env.EGRESS_MODE === 'open') {
-    return forward('egress mode open', request, ctx);
+    return forward('egress mode open', request, ctx, env);
   }
 
-  logAttempt('blocked', 'egress denied by default', request, ctx);
+  await logAttempt('blocked', 'egress denied by default', request, ctx, undefined, env);
   return new Response(
     'Outbound network access is disabled in this tenfootpole sandbox.\n',
     { status: 403, headers: { 'content-type': 'text/plain' } },
@@ -85,35 +104,36 @@ Sandbox.outbound = async (
 Sandbox.outboundHandlers = {
   allowGitHost: (
     request: Request,
-    _env: Cloudflare.Env,
+    env: Cloudflare.Env,
     ctx: OutboundHandlerContext,
-  ) => forward('git clone', request, ctx),
+  ) => forward('git clone', request, ctx, env),
   // Pi -> Workers AI. Registered per sandbox for its whole life.
   workersAi: (
     request: Request,
     env: Cloudflare.Env,
     ctx: OutboundHandlerContext,
-  ) => handleAiRequest(request, env, ctx.containerId ?? 'unknown'),
+  ) => handleAiRequest(request, env, ctx),
 };
 
 async function forward(
   reason: string,
   request: Request,
   ctx: OutboundHandlerContext,
+  env: Cloudflare.Env,
 ): Promise<Response> {
   const start = Date.now();
   try {
     const response = await fetch(request);
-    logAttempt('allowed', reason, request, ctx, {
+    await logAttempt('allowed', reason, request, ctx, {
       status: response.status,
       durationMs: Date.now() - start,
-    });
+    }, env);
     return response;
   } catch (error) {
-    logAttempt('allowed', reason, request, ctx, {
+    await logAttempt('allowed', reason, request, ctx, {
       error: error instanceof Error ? error.message : String(error),
       durationMs: Date.now() - start,
-    });
+    }, env);
     throw error;
   }
 }

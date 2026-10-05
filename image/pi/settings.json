@@ -1,1 +1,1 @@
-{ "defaultProvider": "tenfootpole", "defaultModel": "default" }
+{ "defaultProvider": "tenfootpole", "defaultModel": "default", "enableInstallTelemetry": false }

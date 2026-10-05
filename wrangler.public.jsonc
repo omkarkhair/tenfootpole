@@ -36,6 +36,10 @@
       {
         "class_name": "Registry",
         "name": "REGISTRY"
+      },
+      {
+        "class_name": "EgressLog",
+        "name": "EGRESS_LOG"
       }
     ]
   },
@@ -54,6 +58,10 @@
     {
       "new_sqlite_classes": ["Registry"],
       "tag": "v2"
+    },
+    {
+      "new_sqlite_classes": ["EgressLog"],
+      "tag": "v3"
     }
   ],
   "ai": { "binding": "AI" },

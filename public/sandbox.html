@@ -150,8 +150,39 @@
       </div>
     </aside>
 
-    <section class="term-pane">
-      <div class="term" id="term"></div>
+    <section class="main-pane">
+      <div class="tabs" role="tablist">
+        <button type="button" class="tab active" role="tab" data-tab="terminal" aria-selected="true">Terminal</button>
+        <button type="button" class="tab" role="tab" data-tab="network" aria-selected="false">
+          Network watch <span class="tab-badge" id="net-badge" hidden>0</span>
+        </button>
+      </div>
+
+      <div class="term-pane" id="pane-terminal" role="tabpanel">
+        <div class="term" id="term"></div>
+      </div>
+
+      <div class="net-pane" id="pane-network" role="tabpanel" hidden>
+        <div class="net-summary">
+          <div class="net-stat"><span id="net-total">0</span><label>requests</label></div>
+          <div class="net-stat ok"><span id="net-allowed">0</span><label>allowed</label></div>
+          <div class="net-stat bad"><span id="net-blocked">0</span><label>blocked</label></div>
+          <p class="net-mode" id="net-mode"></p>
+        </div>
+        <div class="net-body">
+          <div class="net-hosts">
+            <div class="side-label">Hosts contacted</div>
+            <div id="net-hosts"><p class="net-empty">Nothing yet.</p></div>
+          </div>
+          <div class="net-events">
+            <div class="side-label">Live requests <span id="net-dropped"></span></div>
+            <div class="net-table-wrap"><table class="net-table"><tbody id="net-rows"></tbody></table></div>
+            <p class="net-empty" id="net-empty">No outbound requests so far.</p>
+          </div>
+        </div>
+        <p class="net-foot">Shows HTTP(S) only. Other protocols and raw TCP/UDP are dropped by the network layer and never reach this log. Query strings are not recorded.</p>
+      </div>
+
       <div class="term-overlay" id="term-overlay" hidden></div>
     </section>
   </div>
